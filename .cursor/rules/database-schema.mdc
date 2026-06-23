@@ -1,0 +1,92 @@
+---
+description: Supabase database schema and exam generation logic for KOK Practice
+alwaysApply: false
+globs: ["app/**", "actions/**", "lib/**", "types/**"]
+---
+
+# Database Schema — KOK Practice
+
+Supabase project URL: `https://vhamcqwzyuerbrgsijjw.supabase.co`
+
+## Tables
+
+### `kateg` — Exam categories
+```ts
+{ kcod: number; klect: string; ktime: number; kpict: string | null }
+```
+| kcod | Category | License type |
+|------|----------|-------------|
+| 1 | ΕΡΩΤΗΜΑΤΟΛΟΓΙΟ 1 | B — car (845 questions, 35 min) |
+| 2 | ΕΡΩΤΗΜΑΤΟΛΟΓΙΟ 2 | A — motorcycle (145 q, 15 min) |
+| 3 | ΕΡΩΤΗΜΑΤΟΛΟΓΙΟ 4 | C — truck (201 q, 15 min) |
+| 4 | ΕΡΩΤΗΜΑΤΟΛΟΓΙΟ 5 | D — bus (198 q, 15 min) |
+| 5 | ΕΡΩΤΗΜΑΤΟΛΟΓΙΟ ADR | Hazardous materials (123 q, 15 min) |
+
+### `quest` — Questions
+```ts
+{ qcod: number; qkateg: number; qpag: number; qlang: number;
+  qlect: string; qphoto: string | null; qsound: string | null; qbook: string | null }
+```
+- `qlang`: 1=Greek, 2=English, 3=Russian, 4=Albanian
+- `qphoto`: image filename (e.g. `C001.jpg`) — `'0'` means no image
+- `qpag`: pool/group number used by exam generation
+
+### `answer` — Answers
+```ts
+{ aqcod: number; aaa: number; alect: string; acorr: boolean; asound: string | null }
+```
+- Exactly one answer per question has `acorr = true`
+- `aaa` = answer sequence number (1, 2, 3)
+
+### `numbs` — Exam distribution matrix
+```ts
+{ kcod: number; pcod: number; lect: string | null; numb: number }
+```
+- `pcod` matches `quest.qpag`
+- `numb` = how many questions to randomly draw from that pool
+
+## Exam Generation Query Pattern
+
+```ts
+// 1. Get distribution for category
+const { data: pools } = await supabase
+  .from('numbs')
+  .select('pcod, numb')
+  .eq('kcod', kategId);
+
+// 2. For each pool, fetch random questions
+const { data: questions } = await supabase
+  .from('quest')
+  .select('*, answer(*)')
+  .eq('qkateg', kategId)
+  .eq('qpag', pcod)
+  .eq('qlang', 1)
+  .limit(numb * 5); // fetch extra, shuffle client-side
+
+// 3. Shuffle and take numb items
+```
+
+## Question Image URLs (Supabase Storage)
+
+All 515 question images are stored in the `question-images` public bucket.
+
+**Mapping rule:** `qphoto` stores the filename stem without extension (e.g. `"C001"`, `"B-01"`, `"B02"`).
+
+```ts
+const STORAGE_BASE =
+  `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/question-images`;
+
+function getQuestionImageUrl(qphoto: string | null): string | null {
+  if (!qphoto || qphoto === '0') return null;
+  return `${STORAGE_BASE}/${qphoto.toUpperCase()}.jpg`;
+}
+```
+
+- `qphoto = "0"` or `null` → no image
+- All other values → `{STORAGE_BASE}/{qphoto.toUpperCase()}.jpg`
+- GIF UI files (buttons, welcome screens) exist in the bucket but are not linked from `quest`
+
+## Foreign Keys
+- `quest.qkateg → kateg.kcod` (RESTRICT)
+- `answer.aqcod → quest.qcod` (CASCADE DELETE)
+- `numbs.kcod → kateg.kcod` (RESTRICT)

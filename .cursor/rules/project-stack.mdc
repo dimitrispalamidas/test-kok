@@ -1,0 +1,37 @@
+---
+description: Project stack, conventions and structure for KOK Practice app
+alwaysApply: true
+---
+
+# KOK Practice — Stack & Conventions
+
+## Package manager
+Always use **pnpm**. Never suggest npm or yarn commands.
+
+## Formatting (Biome)
+- Single quotes for strings
+- 2-space indentation
+- Semicolons always
+- Trailing commas ES5
+- Imports organised at top of file (no inline imports)
+
+## Next.js App Router
+- Server Components by default — add `'use client'` only when interactivity/hooks are needed
+- Server Actions live in `actions/` with `'use server'` directive
+- Use `lib/supabase/server.ts` in Server Components and Server Actions
+- Use `lib/supabase/client.ts` in Client Components only
+
+## TypeScript
+- Strict mode — no implicit `any` in database code
+- Use types from `types/database.ts` (Quest, Answer, Kateg, Numbs, QuestWithAnswers)
+- Exhaustive switch: add `never` check in default case for union/enum switches
+
+## Tailwind CSS 4
+- Use CSS variables defined in `app/globals.css` via `var(--color-*)` tokens
+- Merge classes with `cn()` from `@/lib/utils`
+- No inline style attributes for theming — use Tailwind utilities
+
+## Data fetching
+- Server Components: fetch directly with Supabase server client
+- Client Components: use TanStack Query (`useQuery`, `useMutation`)
+- Never fetch Supabase data directly in event handlers — use Server Actions or Query functions
