@@ -11,6 +11,8 @@ type QuestionCardProps = {
   onSelect: (aaa: number) => void;
   disabled?: boolean;
   revealMode?: boolean;
+  showProgress?: boolean;
+  variant?: 'default' | 'exam';
 };
 
 function getAnswerState(
@@ -43,20 +45,22 @@ export function QuestionCard({
   onSelect,
   disabled = false,
   revealMode = false,
+  showProgress = true,
+  variant = 'default',
 }: QuestionCardProps) {
   const correctAnswer = question.answers.find((a) => a.acorr);
   const correctAaa = correctAnswer?.aaa ?? 0;
+  const isExam = variant === 'exam';
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-muted-foreground">
-          Ερώτηση {questionNumber} / {totalQuestions}
-        </p>
-        <h2 className="text-lg font-semibold leading-relaxed">
-          {question.qlect}
-        </h2>
-      </div>
+    <div className="space-y-5">
+      {!isExam && showProgress && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            Ερώτηση {questionNumber} / {totalQuestions}
+          </span>
+        </div>
+      )}
 
       <QuestionImageFromPhoto
         key={question.qphoto ?? 'no-image'}
@@ -64,7 +68,17 @@ export function QuestionCard({
         alt={question.qlect}
       />
 
-      <div className="space-y-2">
+      <h2
+        className={
+          isExam
+            ? 'text-center text-base font-medium leading-relaxed sm:text-lg'
+            : 'text-lg font-semibold leading-relaxed sm:text-xl'
+        }
+      >
+        {question.qlect}
+      </h2>
+
+      <div className="space-y-2.5">
         {question.answers.map((answer, idx) => (
           <AnswerOption
             key={`${question.qcod}-${answer.aaa}`}
@@ -79,6 +93,7 @@ export function QuestionCard({
             )}
             onSelect={() => onSelect(answer.aaa)}
             disabled={disabled || revealMode}
+            variant={isExam ? 'minimal' : 'default'}
           />
         ))}
       </div>

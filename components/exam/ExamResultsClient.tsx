@@ -4,6 +4,7 @@ import { CheckCircle2, Home, RotateCcw, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { QuestionCard } from '@/components/ui/QuestionCard';
+import { getPassThreshold } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import {
   computeExamScore,
@@ -37,6 +38,19 @@ export function ExamResultsClient({ kcod }: ExamResultsClientProps) {
     }
     return computeExamScore(result.questions, numericAnswers).records;
   }, [result]);
+
+  // Recompute passMin from the actual exam length so that stale sessionStorage
+  // entries (which may have stored the raw hardcoded threshold) display correctly.
+  const passMin = useMemo(() => {
+    if (!result) return 0;
+    const threshold = getPassThreshold(result.kcod);
+    return Math.ceil(result.total * (threshold.min / threshold.total));
+  }, [result]);
+
+  const passed = useMemo(() => {
+    if (!result) return false;
+    return result.score >= passMin;
+  }, [result, passMin]);
 
   const wrongQuestions = useMemo(() => {
     if (!result) return [];
@@ -72,12 +86,12 @@ export function ExamResultsClient({ kcod }: ExamResultsClientProps) {
         <div
           className={cn(
             'mx-auto mb-4 flex size-20 items-center justify-center rounded-full',
-            result.passed
+            passed
               ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
               : 'bg-destructive/15 text-destructive'
           )}
         >
-          {result.passed ? (
+          {passed ? (
             <CheckCircle2 className="size-10" />
           ) : (
             <XCircle className="size-10" />
@@ -85,7 +99,7 @@ export function ExamResultsClient({ kcod }: ExamResultsClientProps) {
         </div>
 
         <h1 className="text-3xl font-bold">
-          {result.passed ? 'Επιτυχία!' : 'Αποτυχία'}
+          {passed ? 'Επιτυχία!' : 'Αποτυχία'}
         </h1>
         <p className="mt-2 text-muted-foreground">{result.categoryLabel}</p>
 
@@ -96,8 +110,7 @@ export function ExamResultsClient({ kcod }: ExamResultsClientProps) {
           </span>
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Απαιτούνται τουλάχιστον {result.passMin} σωστές απαντήσεις για
-          επιτυχία
+          Απαιτούνται τουλάχιστον {passMin} σωστές απαντήσεις για επιτυχία
         </p>
       </section>
 

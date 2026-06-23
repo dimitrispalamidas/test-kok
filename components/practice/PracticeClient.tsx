@@ -1,11 +1,14 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import Link from 'next/link';
+import { AnimatePresence, motion } from 'motion/react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import type { PracticeBatch } from '@/actions/practice';
 import { getPracticeQuestions } from '@/actions/practice';
+import { ExamActionBar } from '@/components/exam/ExamActionBar';
+import { ExamHeader } from '@/components/exam/ExamHeader';
 import { QuestionCard } from '@/components/ui/QuestionCard';
+import { QuestionNumberStrip } from '@/components/ui/QuestionNumberStrip';
 import { CATEGORY_LABELS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { Kateg, QuestWithAnswers } from '@/types/database';
@@ -13,11 +16,20 @@ import type { Kateg, QuestWithAnswers } from '@/types/database';
 type PracticeClientProps = {
   category: Kateg;
   initialBatch: PracticeBatch;
+  theme?: string | null;
+};
+
+const questionTransition = {
+  initial: { opacity: 0, x: 24 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -24 },
+  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const },
 };
 
 export function PracticeClient({
   category,
   initialBatch,
+  theme = null,
 }: PracticeClientProps) {
   const [questions, setQuestions] = useState<QuestWithAnswers[]>(
     initialBatch.questions
@@ -29,6 +41,8 @@ export function PracticeClient({
   const [total, setTotal] = useState(initialBatch.total);
   const [hasMore, setHasMore] = useState(initialBatch.hasMore);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
+  const [answeredIndices] = useState<Set<number>>(new Set());
 
   const categoryLabel = CATEGORY_LABELS[category.kcod] ?? category.klect;
   const currentQuestion = questions[currentIndex];
@@ -43,7 +57,8 @@ export function PracticeClient({
       const batch = await getPracticeQuestions(
         category.kcod,
         offset + initialBatch.limit,
-        initialBatch.limit
+        initialBatch.limit,
+        theme
       );
       const merged = [...questions, ...batch.questions];
       setQuestions(merged);
@@ -69,7 +84,13 @@ export function PracticeClient({
     setRevealed(true);
   };
 
-  const handleNext = async () => {
+  const handleConfirm = async () => {
+    if (!revealed) {
+      if (selectedAaa == null && currentQuestion) {
+        return;
+      }
+    }
+
     const nextIndex = currentIndex + 1;
     let available = questions;
 
@@ -84,12 +105,32 @@ export function PracticeClient({
     }
   };
 
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+  const handleSkip = async () => {
+    const nextIndex = currentIndex + 1;
+    let available = questions;
+
+    if (nextIndex >= available.length && hasMore) {
+      available = await loadMore();
+    }
+
+    if (nextIndex < available.length) {
+      setCurrentIndex(nextIndex);
       setSelectedAaa(null);
       setRevealed(false);
     }
+  };
+
+  const toggleBookmark = () => {
+    if (!currentQuestion) return;
+    setBookmarks((prev) => {
+      const next = new Set(prev);
+      if (next.has(currentQuestion.qcod)) {
+        next.delete(currentQuestion.qcod);
+      } else {
+        next.add(currentQuestion.qcod);
+      }
+      return next;
+    });
   };
 
   if (!currentQuestion) {
@@ -100,83 +141,88 @@ export function PracticeClient({
     );
   }
 
-  const isLastLoaded = currentIndex === questions.length - 1;
-  const canGoNext = !isLastLoaded || hasMore;
+  const isCorrect =
+    selectedAaa != null &&
+    currentQuestion.answers.find((a) => a.aaa === selectedAaa)?.acorr;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">{categoryLabel}</p>
-          <h1 className="text-xl font-semibold">Ελεύθερη Εξάσκηση</h1>
-        </div>
-        <Link
-          href="/"
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-        >
-          Αρχική
-        </Link>
+    <div className="mx-auto flex min-h-screen max-w-lg flex-col gap-4 px-4 pb-28 pt-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-primary">
+          {theme ?? categoryLabel}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {theme ? 'Εξάσκηση ανά Θέμα' : 'Ελεύθερη Εξάσκηση'}
+        </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <QuestionCard
-          question={currentQuestion}
-          questionNumber={currentIndex + 1}
-          totalQuestions={total}
-          selectedAaa={selectedAaa}
-          onSelect={handleSelect}
-          revealMode={revealed}
-          disabled={revealed}
-        />
+      <ExamHeader
+        current={currentIndex + 1}
+        total={total}
+        timerDisplay="∞"
+        bookmarked={bookmarks.has(currentQuestion.qcod)}
+        onToggleBookmark={toggleBookmark}
+        exitHref="/questions"
+      />
 
-        {revealed && selectedAaa != null && (
-          <p
-            className={cn(
-              'mt-4 rounded-md px-4 py-2 text-sm font-medium',
-              currentQuestion.answers.find((a) => a.aaa === selectedAaa)?.acorr
-                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                : 'bg-destructive/10 text-destructive'
-            )}
-          >
-            {currentQuestion.answers.find((a) => a.aaa === selectedAaa)?.acorr
-              ? 'Σωστή απάντηση!'
-              : 'Λάθος απάντηση — δες τη σωστή παραπάνω.'}
-          </p>
-        )}
+      <QuestionNumberStrip
+        total={questions.length}
+        current={currentIndex}
+        answered={answeredIndices}
+        onNavigate={setCurrentIndex}
+      />
+
+      <div className="flex-1">
+        <AnimatePresence mode="wait">
+          <motion.div key={currentQuestion.qcod} {...questionTransition}>
+            <QuestionCard
+              question={currentQuestion}
+              questionNumber={currentIndex + 1}
+              totalQuestions={total}
+              selectedAaa={selectedAaa}
+              onSelect={handleSelect}
+              revealMode={revealed}
+              disabled={revealed}
+              showProgress={false}
+              variant="exam"
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {revealed && selectedAaa != null && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.25 }}
+              className={cn(
+                'mt-5 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium',
+                isCorrect
+                  ? 'bg-success/12 text-success'
+                  : 'bg-destructive/12 text-destructive'
+              )}
+            >
+              {isCorrect ? (
+                <CheckCircle2 className="size-5 shrink-0" />
+              ) : (
+                <XCircle className="size-5 shrink-0" />
+              )}
+              <span>
+                {isCorrect
+                  ? 'Σωστή απάντηση!'
+                  : 'Λάθος απάντηση — δες τη σωστή παραπάνω.'}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            className={cn(
-              'inline-flex items-center gap-1 rounded-md border border-border px-4 py-2 text-sm',
-              'transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50'
-            )}
-          >
-            <ChevronLeft className="size-4" />
-            Προηγούμενη
-          </button>
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={!canGoNext || loadingMore}
-            className={cn(
-              'inline-flex items-center gap-1 rounded-md border border-border px-4 py-2 text-sm',
-              'transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50'
-            )}
-          >
-            {loadingMore ? 'Φόρτωση...' : 'Επόμενη'}
-            <ChevronRight className="size-4" />
-          </button>
-        </div>
-
-        <span className="text-sm text-muted-foreground">
-          {currentIndex + 1} / {total}
-        </span>
-      </div>
+      <ExamActionBar
+        onSkip={handleSkip}
+        onConfirm={handleConfirm}
+        confirmDisabled={loadingMore}
+      />
     </div>
   );
 }

@@ -29,8 +29,8 @@ export function QuestionImage({ qphoto, alt, className }: QuestionImageProps) {
   return (
     <div
       className={cn(
-        'relative mx-auto aspect-video w-full max-w-lg overflow-hidden rounded-lg border border-border bg-muted/30',
-        className,
+        'relative mx-auto aspect-video w-full max-w-lg overflow-hidden rounded-2xl border border-border/60 bg-card',
+        className
       )}
     >
       {/* Skeleton shimmer — visible until image loads */}
@@ -38,10 +38,10 @@ export function QuestionImage({ qphoto, alt, className }: QuestionImageProps) {
         aria-hidden
         className={cn(
           'absolute inset-0 transition-opacity duration-300',
-          loaded ? 'opacity-0 pointer-events-none' : 'opacity-100',
+          loaded ? 'opacity-0 pointer-events-none' : 'opacity-100'
         )}
       >
-        <div className='h-full w-full animate-pulse rounded-lg bg-muted' />
+        <div className="h-full w-full animate-pulse rounded-lg bg-muted" />
       </div>
 
       <Image
@@ -51,7 +51,7 @@ export function QuestionImage({ qphoto, alt, className }: QuestionImageProps) {
         unoptimized
         className={cn(
           'object-contain p-2 transition-opacity duration-300',
-          loaded ? 'opacity-100' : 'opacity-0',
+          loaded ? 'opacity-100' : 'opacity-0'
         )}
         onLoad={() => setLoaded(true)}
         onError={() => {

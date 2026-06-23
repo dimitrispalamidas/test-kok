@@ -6,10 +6,15 @@ import { createClient } from '@/lib/supabase/server';
 
 type PracticePageProps = {
   params: Promise<{ kcod: string }>;
+  searchParams: Promise<{ theme?: string }>;
 };
 
-export default async function PracticePage({ params }: PracticePageProps) {
+export default async function PracticePage({
+  params,
+  searchParams,
+}: PracticePageProps) {
   const { kcod: kcodParam } = await params;
+  const { theme } = await searchParams;
   const kcod = Number(kcodParam);
 
   if (!isExamCategory(kcod)) {
@@ -29,10 +34,16 @@ export default async function PracticePage({ params }: PracticePageProps) {
 
   let batch;
   try {
-    batch = await getPracticeQuestions(kcod, 0, 20);
+    batch = await getPracticeQuestions(kcod, 0, 20, theme);
   } catch {
     notFound();
   }
 
-  return <PracticeClient category={category} initialBatch={batch} />;
+  return (
+    <PracticeClient
+      category={category}
+      initialBatch={batch}
+      theme={theme ?? null}
+    />
+  );
 }
