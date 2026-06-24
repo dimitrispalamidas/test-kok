@@ -29,7 +29,7 @@ export function QuestionImage({ qphoto, alt, className }: QuestionImageProps) {
   return (
     <div
       className={cn(
-        'relative mx-auto aspect-video w-full max-w-lg overflow-hidden rounded-2xl border border-border/60 bg-card',
+        'relative mx-auto aspect-video w-full max-w-lg overflow-hidden rounded-2xl border border-border/60 bg-card lg:max-w-3xl',
         className
       )}
     >

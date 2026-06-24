@@ -178,7 +178,7 @@ export function ExamClient({ category, questions }: ExamClientProps) {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col gap-4 px-4 pb-28 pt-4">
+    <div className="mx-auto flex min-h-screen max-w-lg flex-col gap-4 px-4 pb-28 pt-4 lg:max-w-3xl">
       <ExamHeader
         current={currentIndex + 1}
         total={questions.length}

@@ -17,7 +17,7 @@ export function TopicsClient({ categories, topicsByKcod }: TopicsClientProps) {
   const topics = topicsByKcod[kcod] ?? [];
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top">
+    <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top lg:max-w-3xl">
       <header>
         <div className="flex items-center gap-2">
           <BookOpen className="size-5 text-primary" />

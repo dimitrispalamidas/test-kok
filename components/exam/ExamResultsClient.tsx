@@ -62,7 +62,7 @@ export function ExamResultsClient({ kcod }: ExamResultsClientProps) {
 
   if (!result) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+      <div className="mx-auto max-w-lg px-4 py-20 text-center lg:max-w-3xl">
         <p className="text-muted-foreground">
           Δεν βρέθηκαν αποτελέσματα εξέτασης.
         </p>
@@ -81,7 +81,7 @@ export function ExamResultsClient({ kcod }: ExamResultsClientProps) {
     reviewIndex != null ? wrongQuestions[reviewIndex] : null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+    <div className="mx-auto max-w-lg space-y-8 px-4 py-10 lg:max-w-3xl">
       <section className="text-center">
         <div
           className={cn(

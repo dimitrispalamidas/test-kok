@@ -15,7 +15,9 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <>
-      <div className={hideNav ? undefined : 'pb-24'}>{children}</div>
+      <div className={hideNav ? undefined : 'pb-24 lg:pb-6 lg:pl-64'}>
+        {children}
+      </div>
       {!hideNav && <BottomNav />}
     </>
   );

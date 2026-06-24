@@ -33,7 +33,7 @@ export function StartTestClient({
   const examCount = selected?.examQuestionCount ?? 0;
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top">
+    <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top lg:max-w-3xl">
       {/* Header */}
       <header>
         <h1 className="text-2xl font-bold">Έναρξη Τεστ</h1>

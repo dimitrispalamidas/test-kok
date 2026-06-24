@@ -2,6 +2,8 @@
 
 import { Award, BarChart3, Trophy } from 'lucide-react';
 import { useState } from 'react';
+import type { CategoryWithStats } from '@/actions/categories';
+import { CategorySelector } from '@/components/home/CategorySelector';
 import { cn } from '@/lib/utils';
 
 type RankingTab = 'charts' | 'ranking' | 'achievements';
@@ -16,12 +18,25 @@ const tabs: {
   { id: 'achievements', label: 'Επιτεύγματα', icon: Award },
 ];
 
-export function RankingClient() {
+type RankingClientProps = {
+  categories: CategoryWithStats[];
+};
+
+export function RankingClient({ categories }: RankingClientProps) {
   const [tab, setTab] = useState<RankingTab>('charts');
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6 safe-top">
-      <div className="mb-6 flex rounded-2xl border border-border/60 bg-card p-1">
+    <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top lg:max-w-3xl">
+      <header>
+        <h1 className="text-2xl font-bold">Κατάταξη</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Γραφήματα, κατάταξη και επιτεύγματα
+        </p>
+      </header>
+
+      <CategorySelector categories={categories} />
+
+      <div className="flex rounded-2xl border border-border/60 bg-card p-1">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}

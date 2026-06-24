@@ -40,7 +40,7 @@ const aboutItems = [
 
 export function ProfileClient({ categories }: ProfileClientProps) {
   return (
-    <div className="mx-auto max-w-lg space-y-6 px-4 py-6 safe-top">
+    <div className="mx-auto max-w-lg space-y-6 px-4 py-6 safe-top lg:max-w-3xl">
       <header>
         <h1 className="text-2xl font-bold">Προφίλ</h1>
         <p className="mt-1 text-sm text-muted-foreground">

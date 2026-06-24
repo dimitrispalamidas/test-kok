@@ -146,7 +146,7 @@ export function PracticeClient({
     currentQuestion.answers.find((a) => a.aaa === selectedAaa)?.acorr;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col gap-4 px-4 pb-28 pt-4">
+    <div className="mx-auto flex min-h-screen max-w-lg flex-col gap-4 px-4 pb-28 pt-4 lg:max-w-3xl">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-primary">
           {theme ?? categoryLabel}
