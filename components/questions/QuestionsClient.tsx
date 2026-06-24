@@ -1,10 +1,17 @@
 'use client';
 
-import { Bookmark, X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Bookmark, Loader2, X } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import {
+  getCategorySavedQuestions,
+  getCategoryWrongQuestions,
+} from '@/actions/questions';
 import type { CategoryWithStats } from '@/actions/categories';
 import { CategorySelector } from '@/components/home/CategorySelector';
+import { QuestionCard } from '@/components/ui/QuestionCard';
+import { useCategory } from '@/hooks/use-category';
 import { cn } from '@/lib/utils';
 
 type QuestionsClientProps = {
@@ -17,20 +24,45 @@ export function QuestionsClient({ categories }: QuestionsClientProps) {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as Tab) ?? 'saved';
   const [tab, setTab] = useState<Tab>(initialTab);
+  const { kcod } = useCategory();
 
   useEffect(() => {
-    const t = searchParams.get('tab') as Tab;
-    if (t === 'saved' || t === 'wrong') setTab(t);
+    const nextTab = searchParams.get('tab') as Tab;
+    if (nextTab === 'saved' || nextTab === 'wrong') setTab(nextTab);
   }, [searchParams]);
+
+  const { data: savedQuestions = [], isLoading: savedLoading } = useQuery({
+    queryKey: ['saved-questions', kcod],
+    queryFn: () => getCategorySavedQuestions(kcod),
+  });
+
+  const { data: wrongQuestions = [], isLoading: wrongLoading } = useQuery({
+    queryKey: ['wrong-questions', kcod],
+    queryFn: () => getCategoryWrongQuestions(kcod),
+  });
 
   const tabs: {
     id: Tab;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
+    count: number;
   }[] = [
-    { id: 'saved', label: 'Αποθηκευμένες (0)', icon: Bookmark },
-    { id: 'wrong', label: 'Λανθασμένες (0)', icon: X },
+    {
+      id: 'saved',
+      label: `Αποθηκευμένες (${savedQuestions.length})`,
+      icon: Bookmark,
+      count: savedQuestions.length,
+    },
+    {
+      id: 'wrong',
+      label: `Λανθασμένες (${wrongQuestions.length})`,
+      icon: X,
+      count: wrongQuestions.length,
+    },
   ];
+
+  const activeQuestions = tab === 'saved' ? savedQuestions : wrongQuestions;
+  const isLoading = tab === 'saved' ? savedLoading : wrongLoading;
 
   return (
     <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top lg:max-w-3xl">
@@ -62,19 +94,40 @@ export function QuestionsClient({ categories }: QuestionsClientProps) {
         ))}
       </div>
 
-      {tab === 'saved' && (
+      {isLoading ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="size-8 animate-spin text-primary" />
+        </div>
+      ) : activeQuestions.length === 0 ? (
         <EmptyState
-          icon={Bookmark}
-          message="Δεν υπάρχουν αποθηκευμένες ερωτήσεις"
+          icon={tab === 'saved' ? Bookmark : X}
+          message={
+            tab === 'saved'
+              ? 'Δεν υπάρχουν αποθηκευμένες ερωτήσεις για αυτή την κατηγορία'
+              : 'Δεν υπάρχουν λανθασμένες ερωτήσεις για αυτή την κατηγορία'
+          }
+          variant={tab === 'wrong' ? 'destructive' : 'primary'}
         />
-      )}
-
-      {tab === 'wrong' && (
-        <EmptyState
-          icon={X}
-          message="Δεν υπάρχουν λανθασμένες ερωτήσεις"
-          variant="destructive"
-        />
+      ) : (
+        <div className="space-y-4">
+          {activeQuestions.map((question, index) => (
+            <div
+              key={question.qcod}
+              className="rounded-2xl border border-border/60 bg-card p-4"
+            >
+              <QuestionCard
+                question={question}
+                questionNumber={index + 1}
+                totalQuestions={activeQuestions.length}
+                selectedAaa={null}
+                onSelect={() => {}}
+                revealMode
+                disabled
+                showProgress={false}
+              />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -104,7 +157,7 @@ function EmptyState({
           )}
         />
       </span>
-      <p className="text-center text-muted-foreground">{message}</p>
+      <p className="max-w-xs text-center text-muted-foreground">{message}</p>
     </div>
   );
 }

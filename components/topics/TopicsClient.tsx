@@ -5,7 +5,7 @@ import type { CategoryWithStats } from '@/actions/categories';
 import type { TopicWithCount } from '@/actions/topics';
 import { CategorySelector } from '@/components/home/CategorySelector';
 import { TopicList } from '@/components/questions/TopicList';
-import { useCategoryStore } from '@/lib/store/category-store';
+import { useCategory } from '@/hooks/use-category';
 
 type TopicsClientProps = {
   categories: CategoryWithStats[];
@@ -13,7 +13,7 @@ type TopicsClientProps = {
 };
 
 export function TopicsClient({ categories, topicsByKcod }: TopicsClientProps) {
-  const { kcod } = useCategoryStore();
+  const { kcod } = useCategory();
   const topics = topicsByKcod[kcod] ?? [];
 
   return (

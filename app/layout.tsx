@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { Suspense } from 'react';
 import { Toaster } from 'sonner';
 import { AppShell } from '@/components/layout/AppShell';
 import { QueryProvider } from '@/components/providers/QueryProvider';
@@ -13,13 +15,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'ΚΟΚ Practice',
-  description: 'Smart εξάσκηση Κώδικα Οδικής Κυκλοφορίας — όλες οι κατηγορίες',
+  title: 'Ταμπουρεάς Driving Test',
+  description: 'Smart εξάσκηση Κώδικα Οδικής Κυκλοφορίας — Σχολή Οδηγών Σωτήρης Ταμπουρεάς',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'ΚΟΚ Practice',
+    title: 'Ταμπουρεάς Driving Test',
   },
   icons: {
     icon: [
@@ -53,10 +55,14 @@ export default function RootLayout({
           forcedTheme="dark"
           enableSystem={false}
         >
-          <QueryProvider>
-            <AppShell>{children}</AppShell>
-            <Toaster richColors position="top-center" />
-          </QueryProvider>
+          <Suspense>
+            <NuqsAdapter>
+              <QueryProvider>
+                <AppShell>{children}</AppShell>
+                <Toaster richColors position="top-center" />
+              </QueryProvider>
+            </NuqsAdapter>
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

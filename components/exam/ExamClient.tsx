@@ -2,15 +2,15 @@
 
 import { AnimatePresence, motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { saveExamResult } from '@/actions/user-data';
 import { ExamActionBar } from '@/components/exam/ExamActionBar';
 import { ExamHeader } from '@/components/exam/ExamHeader';
 import { useExamTimer } from '@/components/exam/useExamTimer';
 import { QuestionCard } from '@/components/ui/QuestionCard';
 import { QuestionNumberStrip } from '@/components/ui/QuestionNumberStrip';
 import { CATEGORY_LABELS, getPassThreshold } from '@/lib/constants';
-import { recordExamResult } from '@/lib/stats';
 import type { Kateg, QuestWithAnswers } from '@/types/database';
 import {
   computeExamScore,
@@ -36,6 +36,7 @@ export function ExamClient({ category, questions }: ExamClientProps) {
   const [answers, setAnswers] = useState<Record<number, number | null>>({});
   const [submitted, setSubmitted] = useState(false);
   const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
+  const startTimeRef = useRef<number>(Date.now());
 
   const passThreshold = getPassThreshold(category.kcod);
   const categoryLabel = CATEGORY_LABELS[category.kcod] ?? category.klect;
@@ -65,16 +66,19 @@ export function ExamClient({ category, questions }: ExamClientProps) {
     if (submitted) return;
     setSubmitted(true);
 
-    const { score } = computeExamScore(questions, answers);
+    const { score, records } = computeExamScore(questions, answers);
     const passed = score >= scaledPassMin;
+    const durationSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
 
-    recordExamResult({
+    saveExamResult({
       kcod: category.kcod,
       title: 'Τυχαίο Τεστ',
       score,
       total: questions.length,
       passed,
-    });
+      durationSeconds,
+      answers: records,
+    }).catch(() => {});
 
     const result: StoredExamResult = {
       kcod: category.kcod,

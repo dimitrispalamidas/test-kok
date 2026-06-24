@@ -8,14 +8,14 @@ import {
   Truck,
   AlertTriangle,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import type { CategoryWithStats } from '@/actions/categories';
+import { useCategory } from '@/hooks/use-category';
 import {
   CATEGORY_LABELS,
   CATEGORY_SHORT,
   type ExamCategoryId,
 } from '@/lib/constants';
-import { useCategoryStore } from '@/lib/store/category-store';
 import { cn } from '@/lib/utils';
 
 const CATEGORY_ICONS: Record<
@@ -34,11 +34,11 @@ type CategorySelectorProps = {
   variant?: 'dropdown' | 'compact';
 };
 
-export function CategorySelector({
+function CategorySelectorInner({
   categories,
   variant = 'dropdown',
 }: CategorySelectorProps) {
-  const { kcod, setKcod } = useCategoryStore();
+  const { kcod, setKcod } = useCategory();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -158,5 +158,13 @@ export function CategorySelector({
         </div>
       )}
     </div>
+  );
+}
+
+export function CategorySelector(props: CategorySelectorProps) {
+  return (
+    <Suspense fallback={null}>
+      <CategorySelectorInner {...props} />
+    </Suspense>
   );
 }

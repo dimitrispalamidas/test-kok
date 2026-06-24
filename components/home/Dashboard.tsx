@@ -2,19 +2,35 @@
 
 import { ArrowRight, Play } from 'lucide-react';
 import Link from 'next/link';
+import { createSerializer, parseAsInteger } from 'nuqs';
+import type { getExamHistory } from '@/actions/user-data';
 import type { CategoryWithStats } from '@/actions/categories';
 import { CategorySelector } from '@/components/home/CategorySelector';
 import { RecentResults } from '@/components/home/RecentResults';
 import { StatsGrid } from '@/components/home/StatsGrid';
-import { useCategoryStore } from '@/lib/store/category-store';
+import { useCategory } from '@/hooks/use-category';
+import { useCategoryStats } from '@/hooks/use-category-stats';
+import type { CategoryCounts } from '@/lib/category-stats';
 import { cn } from '@/lib/utils';
+
+const categorySerializer = createSerializer({ k: parseAsInteger });
 
 type DashboardProps = {
   categories: CategoryWithStats[];
+  history: Awaited<ReturnType<typeof getExamHistory>>;
+  countsByCategory: CategoryCounts;
 };
 
-export function Dashboard({ categories }: DashboardProps) {
-  const { kcod } = useCategoryStore();
+export function Dashboard({
+  categories,
+  history,
+  countsByCategory,
+}: DashboardProps) {
+  const { kcod } = useCategory();
+  const { history: filteredHistory, stats } = useCategoryStats(
+    history,
+    countsByCategory
+  );
 
   const selected =
     categories.find((c) => c.kcod === kcod) ?? categories[0] ?? null;
@@ -26,12 +42,10 @@ export function Dashboard({ categories }: DashboardProps) {
         <p className="mt-1 text-sm text-muted-foreground">Καλωσήρθες</p>
       </header>
 
-      {/* Category selector */}
       <CategorySelector categories={categories} />
 
-      {/* Start test CTA → middle page */}
       <Link
-        href="/start"
+        href={categorySerializer('/start', { k: kcod })}
         className={cn(
           'flex w-full items-center gap-3 rounded-2xl bg-primary px-5 py-4',
           'font-semibold text-primary-foreground shadow-lg shadow-primary/20',
@@ -43,11 +57,12 @@ export function Dashboard({ categories }: DashboardProps) {
         <ArrowRight className="size-5" />
       </Link>
 
-      {/* Stats */}
-      <StatsGrid examQuestionCount={selected?.examQuestionCount ?? 0} />
+      <StatsGrid
+        examQuestionCount={selected?.examQuestionCount ?? 0}
+        stats={stats}
+      />
 
-      {/* Recent results */}
-      <RecentResults />
+      <RecentResults history={filteredHistory} />
     </div>
   );
 }

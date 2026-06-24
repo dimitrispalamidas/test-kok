@@ -1,9 +1,12 @@
-'use client';
-
-import { CircleCheck } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { type ExamHistoryEntry, getHistory } from '@/lib/stats';
+import { CircleCheck, XCircle } from 'lucide-react';
+import type { getExamHistory } from '@/actions/user-data';
 import { cn } from '@/lib/utils';
+
+type HistoryEntry = Awaited<ReturnType<typeof getExamHistory>>[number];
+
+type RecentResultsProps = {
+  history: HistoryEntry[];
+};
 
 const dateFormatter = new Intl.DateTimeFormat('el', {
   day: 'numeric',
@@ -19,13 +22,7 @@ function formatDate(iso: string): string {
   }
 }
 
-export function RecentResults() {
-  const [history, setHistory] = useState<ExamHistoryEntry[]>([]);
-
-  useEffect(() => {
-    setHistory(getHistory());
-  }, []);
-
+export function RecentResults({ history }: RecentResultsProps) {
   if (history.length === 0) {
     return null;
   }
@@ -47,7 +44,7 @@ export function RecentResults() {
               <div className="min-w-0">
                 <p className="font-semibold">{entry.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatDate(entry.completedAt)}
+                  {formatDate(entry.created_at)}
                 </p>
               </div>
               <span
@@ -58,7 +55,11 @@ export function RecentResults() {
                     : 'bg-destructive/15 text-destructive'
                 )}
               >
-                <CircleCheck className="size-3.5" />
+                {entry.passed ? (
+                  <CircleCheck className="size-3.5" />
+                ) : (
+                  <XCircle className="size-3.5" />
+                )}
                 {entry.percentage}%
               </span>
             </div>

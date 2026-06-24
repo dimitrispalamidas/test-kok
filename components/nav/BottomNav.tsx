@@ -1,9 +1,14 @@
 'use client';
 
-import { BookOpen, Car, Grid2X2, Play, Trophy, User } from 'lucide-react';
+import { BookOpen, ClipboardList, Grid2X2, Trophy, User } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { createSerializer, parseAsInteger } from 'nuqs';
+import { useCategory } from '@/hooks/use-category';
 import { cn } from '@/lib/utils';
+
+const categorySerializer = createSerializer({ k: parseAsInteger });
 
 type NavItem = {
   href: string;
@@ -11,33 +16,32 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-const leftItems: NavItem[] = [
+const navItems: NavItem[] = [
   { href: '/', label: 'Αρχική', icon: Grid2X2 },
+  { href: '/start', label: 'Τεστ', icon: ClipboardList },
   { href: '/questions', label: 'Ερωτήσεις', icon: BookOpen },
-];
-
-const rightItems: NavItem[] = [
   { href: '/ranking', label: 'Κατάταξη', icon: Trophy },
   { href: '/profile', label: 'Προφίλ', icon: User },
 ];
 
-const allItems = [...leftItems, ...rightItems];
-
 function NavLink({
   item,
   active,
+  kcod,
   variant = 'mobile',
 }: {
   item: NavItem;
   active: boolean;
+  kcod: number;
   variant?: 'mobile' | 'sidebar';
 }) {
   const Icon = item.icon;
+  const href = categorySerializer(item.href, { k: kcod });
 
   if (variant === 'sidebar') {
     return (
       <Link
-        href={item.href}
+        href={href}
         className={cn(
           'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
           active
@@ -58,7 +62,7 @@ function NavLink({
 
   return (
     <Link
-      href={item.href}
+      href={href}
       className={cn(
         'flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors',
         active ? 'text-primary' : 'text-muted-foreground'
@@ -80,6 +84,7 @@ function NavLink({
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { kcod } = useCategory();
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -94,77 +99,40 @@ export function BottomNav() {
         'lg:inset-y-0 lg:right-auto lg:left-0 lg:w-64 lg:border-t-0 lg:border-r'
       )}
     >
-      <div className="mx-auto flex max-w-lg items-end px-2 pb-1 pt-2 lg:hidden">
-        <div className="flex flex-1">
-          {leftItems.map((item) => (
-            <NavLink key={item.href} item={item} active={isActive(item.href)} />
-          ))}
-        </div>
-
-        <Link
-          href="/start"
-          className={cn(
-            'relative -top-4 mx-2 flex size-14 shrink-0 items-center justify-center',
-            'rounded-full bg-primary text-primary-foreground fab-glow',
-            'transition-transform active:scale-95'
-          )}
-          aria-label="Έναρξη τεστ"
-        >
-          <Play className="size-6 fill-current" />
-        </Link>
-
-        <div className="flex flex-1">
-          {rightItems.map((item) => (
-            <NavLink key={item.href} item={item} active={isActive(item.href)} />
-          ))}
-        </div>
+      <div className="mx-auto flex max-w-lg items-end px-1 pb-1 pt-2 lg:hidden">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.href}
+            item={item}
+            kcod={kcod}
+            active={isActive(item.href)}
+          />
+        ))}
       </div>
 
       <div className="hidden h-full flex-col px-4 py-6 lg:flex">
         <div className="mb-8 px-2">
-          <h2 className="text-lg font-bold tracking-tight">ΚΟΚ Practice</h2>
-          <p className="text-xs text-muted-foreground">Smart εξάσκηση</p>
+          <Image
+            src="/logo-1.png"
+            alt="Ταμπουρεάς Σχολή Οδηγών"
+            width={180}
+            height={48}
+            className="h-12 w-auto"
+          />
         </div>
 
         <div className="flex flex-1 flex-col gap-1">
-          {allItems.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.href}
               item={item}
+              kcod={kcod}
               active={isActive(item.href)}
               variant="sidebar"
             />
           ))}
         </div>
-
-        <Link
-          href="/start"
-          className={cn(
-            'mt-4 flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3',
-            'text-sm font-semibold text-primary-foreground fab-glow',
-            'transition-transform hover:brightness-110 active:scale-[0.98]'
-          )}
-        >
-          <Play className="size-5 fill-current" />
-          Έναρξη Τεστ
-        </Link>
       </div>
     </nav>
-  );
-}
-
-export function FloatingCategoryButton() {
-  return (
-    <Link
-      href="/start"
-      className={cn(
-        'fixed bottom-24 left-4 z-40 flex size-11 items-center justify-center lg:hidden',
-        'rounded-xl border border-primary/40 bg-card/90 text-primary backdrop-blur-md',
-        'shadow-lg transition-transform active:scale-95'
-      )}
-      aria-label="Επιλογή κατηγορίας"
-    >
-      <Car className="size-5" />
-    </Link>
   );
 }

@@ -1,9 +1,11 @@
 'use server';
 
 import { isExamCategory, LANG } from '@/lib/constants';
+import { attachAnswers } from '@/lib/quest';
+import { shuffle } from '@/lib/shuffle';
 import { createClient } from '@/lib/supabase/server';
 import { extractTheme } from '@/lib/topics';
-import type { Answer, Quest, QuestWithAnswers } from '@/types/database';
+import type { Quest, QuestWithAnswers } from '@/types/database';
 
 export type PracticeBatch = {
   questions: QuestWithAnswers[];
@@ -12,41 +14,6 @@ export type PracticeBatch = {
   limit: number;
   hasMore: boolean;
 };
-
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
-
-async function attachAnswers(
-  supabase: SupabaseClient,
-  questRows: Quest[]
-): Promise<QuestWithAnswers[]> {
-  if (!questRows.length) {
-    return [];
-  }
-
-  const qcodes = questRows.map((q) => q.qcod);
-
-  const { data: answers, error: answersError } = await supabase
-    .from('answer')
-    .select('*')
-    .in('aqcod', qcodes)
-    .order('aaa');
-
-  if (answersError) {
-    throw new Error(`Failed to load answers: ${answersError.message}`);
-  }
-
-  const answersByQuestion = new Map<number, Answer[]>();
-  for (const answer of answers ?? []) {
-    const existing = answersByQuestion.get(answer.aqcod) ?? [];
-    existing.push(answer);
-    answersByQuestion.set(answer.aqcod, existing);
-  }
-
-  return questRows.map((question) => ({
-    ...question,
-    answers: answersByQuestion.get(question.qcod) ?? [],
-  }));
-}
 
 export async function getPracticeQuestions(
   kcod: number,
@@ -60,8 +27,6 @@ export async function getPracticeQuestions(
 
   const supabase = await createClient();
 
-  // Theme mode: load every question whose qbook prefix matches the topic.
-  // Topic sets are small enough to return in one batch (no pagination).
   if (theme) {
     const { data: questions, error } = await supabase
       .from('quest')
@@ -117,13 +82,7 @@ export async function getPracticeQuestions(
   const questRows = questions ?? [];
 
   if (!questRows.length) {
-    return {
-      questions: [],
-      total,
-      offset,
-      limit,
-      hasMore: false,
-    };
+    return { questions: [], total, offset, limit, hasMore: false };
   }
 
   const questionsWithAnswers = await attachAnswers(supabase, questRows);
@@ -134,5 +93,113 @@ export async function getPracticeQuestions(
     offset,
     limit,
     hasMore: offset + questRows.length < total,
+  };
+}
+
+export async function getQuickPracticeQuestions(
+  kcod: number,
+  count = 10
+): Promise<PracticeBatch> {
+  if (!isExamCategory(kcod)) {
+    throw new Error('Invalid exam category');
+  }
+
+  const supabase = await createClient();
+
+  const { data: allQuestions, error } = await supabase
+    .from('quest')
+    .select('*')
+    .eq('qkateg', kcod)
+    .eq('qlang', LANG.EL);
+
+  if (error) {
+    throw new Error(`Failed to load questions: ${error.message}`);
+  }
+
+  const rows = allQuestions ?? [];
+
+  // Group by qpag so we pick from different topics
+  const byPage = new Map<number, Quest[]>();
+  for (const q of rows) {
+    const page = q.qpag ?? 0;
+    const group = byPage.get(page) ?? [];
+    group.push(q);
+    byPage.set(page, group);
+  }
+
+  // Shuffle pages, pick 1 question from each until we have `count`
+  const pages = shuffle([...byPage.keys()]);
+  const selected: Quest[] = [];
+
+  for (const page of pages) {
+    if (selected.length >= count) break;
+    const group = byPage.get(page) ?? [];
+    const picked = shuffle(group)[0];
+    if (picked) selected.push(picked);
+  }
+
+  const questionsWithAnswers = await attachAnswers(supabase, selected);
+
+  return {
+    questions: questionsWithAnswers,
+    total: questionsWithAnswers.length,
+    offset: 0,
+    limit: questionsWithAnswers.length,
+    hasMore: false,
+  };
+}
+
+export async function getWeakPracticeQuestions(
+  kcod: number
+): Promise<PracticeBatch> {
+  if (!isExamCategory(kcod)) {
+    throw new Error('Invalid exam category');
+  }
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { questions: [], total: 0, offset: 0, limit: 0, hasMore: false };
+  }
+
+  const { data: wrongEntries, error: wrongError } = await supabase
+    .from('user_wrong_questions')
+    .select('qcod')
+    .eq('user_id', user.id);
+
+  if (wrongError) {
+    throw new Error(`Failed to load wrong questions: ${wrongError.message}`);
+  }
+
+  if (!wrongEntries?.length) {
+    return { questions: [], total: 0, offset: 0, limit: 0, hasMore: false };
+  }
+
+  const qcodes = wrongEntries.map((w) => w.qcod);
+
+  const { data: questions, error: questError } = await supabase
+    .from('quest')
+    .select('*')
+    .eq('qkateg', kcod)
+    .eq('qlang', LANG.EL)
+    .in('qcod', qcodes);
+
+  if (questError) {
+    throw new Error(`Failed to load questions: ${questError.message}`);
+  }
+
+  const questRows = shuffle(questions ?? []);
+  const questionsWithAnswers = await attachAnswers(supabase, questRows);
+
+  return {
+    questions: questionsWithAnswers,
+    total: questionsWithAnswers.length,
+    offset: 0,
+    limit: questionsWithAnswers.length,
+    hasMore: false,
   };
 }

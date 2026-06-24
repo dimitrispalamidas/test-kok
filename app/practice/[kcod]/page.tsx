@@ -1,12 +1,18 @@
 import { notFound } from 'next/navigation';
-import { getPracticeQuestions } from '@/actions/practice';
+import {
+  getPracticeQuestions,
+  getQuickPracticeQuestions,
+  getWeakPracticeQuestions,
+} from '@/actions/practice';
 import { PracticeClient } from '@/components/practice/PracticeClient';
 import { isExamCategory } from '@/lib/constants';
 import { createClient } from '@/lib/supabase/server';
 
+type PracticeMode = 'quick' | 'weak' | null;
+
 type PracticePageProps = {
   params: Promise<{ kcod: string }>;
-  searchParams: Promise<{ theme?: string }>;
+  searchParams: Promise<{ theme?: string; mode?: string }>;
 };
 
 export default async function PracticePage({
@@ -14,7 +20,7 @@ export default async function PracticePage({
   searchParams,
 }: PracticePageProps) {
   const { kcod: kcodParam } = await params;
-  const { theme } = await searchParams;
+  const { theme, mode: modeParam } = await searchParams;
   const kcod = Number(kcodParam);
 
   if (!isExamCategory(kcod)) {
@@ -32,9 +38,18 @@ export default async function PracticePage({
     notFound();
   }
 
+  const mode: PracticeMode =
+    modeParam === 'quick' ? 'quick' : modeParam === 'weak' ? 'weak' : null;
+
   let batch;
   try {
-    batch = await getPracticeQuestions(kcod, 0, 20, theme);
+    if (mode === 'quick') {
+      batch = await getQuickPracticeQuestions(kcod);
+    } else if (mode === 'weak') {
+      batch = await getWeakPracticeQuestions(kcod);
+    } else {
+      batch = await getPracticeQuestions(kcod, 0, 20, theme);
+    }
   } catch {
     notFound();
   }
@@ -44,6 +59,7 @@ export default async function PracticePage({
       category={category}
       initialBatch={batch}
       theme={theme ?? null}
+      mode={mode}
     />
   );
 }

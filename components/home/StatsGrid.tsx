@@ -1,8 +1,5 @@
-'use client';
-
 import { BarChart3, ClipboardList, Flame, Target } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { getStats, getSuccessRate, type UserStats } from '@/lib/stats';
+import type { CategoryStats } from '@/lib/category-stats';
 import { cn } from '@/lib/utils';
 
 type StatCardProps = {
@@ -12,12 +9,7 @@ type StatCardProps = {
   accent?: 'primary' | 'warning';
 };
 
-function StatCard({
-  icon: Icon,
-  value,
-  label,
-  accent = 'primary',
-}: StatCardProps) {
+function StatCard({ icon: Icon, value, label, accent = 'primary' }: StatCardProps) {
   return (
     <div
       className={cn(
@@ -39,22 +31,23 @@ function StatCard({
 
 type StatsGridProps = {
   examQuestionCount?: number;
+  stats: CategoryStats;
 };
 
-export function StatsGrid({ examQuestionCount = 0 }: StatsGridProps) {
-  const [stats, setStats] = useState<UserStats | null>(null);
-
-  useEffect(() => {
-    setStats(getStats());
-  }, []);
-
-  const successRate = stats ? getSuccessRate(stats) : 0;
+export function StatsGrid({ examQuestionCount = 0, stats }: StatsGridProps) {
+  const totalTests = stats.totalTests;
+  const successRate =
+    stats.totalQuestions > 0
+      ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100)
+      : 0;
+  const bestStreak = stats.bestStreak;
+  const completedExams = stats.completedExams;
 
   return (
     <div className="grid grid-cols-2 gap-3">
       <StatCard
         icon={BarChart3}
-        value={String(stats?.totalTests ?? 0)}
+        value={String(totalTests)}
         label="Συνολικά Τεστ"
       />
       <StatCard
@@ -64,13 +57,13 @@ export function StatsGrid({ examQuestionCount = 0 }: StatsGridProps) {
       />
       <StatCard
         icon={Flame}
-        value={String(stats?.bestStreak ?? 0)}
+        value={String(bestStreak)}
         label="Καλύτερο Σερί"
         accent="warning"
       />
       <StatCard
         icon={ClipboardList}
-        value={`${stats?.completedExams ?? 0}/${examQuestionCount > 0 ? '∞' : '0'}`}
+        value={`${completedExams}/${examQuestionCount > 0 ? '∞' : '0'}`}
         label="Τεστ Ολοκλήρωσης"
       />
     </div>

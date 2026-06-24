@@ -1,6 +1,105 @@
 export type Database = {
   public: {
     Tables: {
+      user_exam_results: {
+        Row: {
+          id: string;
+          user_id: string;
+          kcod: number;
+          score: number;
+          total: number;
+          passed: boolean;
+          duration_seconds: number | null;
+          title: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kcod: number;
+          score: number;
+          total: number;
+          passed: boolean;
+          duration_seconds?: number | null;
+          title?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          kcod?: number;
+          score?: number;
+          total?: number;
+          passed?: boolean;
+          duration_seconds?: number | null;
+          title?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      user_exam_answers: {
+        Row: {
+          id: string;
+          result_id: string;
+          qcod: number;
+          selected_aaa: number | null;
+          is_correct: boolean;
+        };
+        Insert: {
+          id?: string;
+          result_id: string;
+          qcod: number;
+          selected_aaa?: number | null;
+          is_correct: boolean;
+        };
+        Update: {
+          id?: string;
+          result_id?: string;
+          qcod?: number;
+          selected_aaa?: number | null;
+          is_correct?: boolean;
+        };
+        Relationships: [];
+      };
+      user_wrong_questions: {
+        Row: {
+          user_id: string;
+          qcod: number;
+          wrong_count: number;
+          last_wrong_at: string;
+        };
+        Insert: {
+          user_id: string;
+          qcod: number;
+          wrong_count?: number;
+          last_wrong_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          qcod?: number;
+          wrong_count?: number;
+          last_wrong_at?: string;
+        };
+        Relationships: [];
+      };
+      user_saved_questions: {
+        Row: {
+          user_id: string;
+          qcod: number;
+          saved_at: string;
+        };
+        Insert: {
+          user_id: string;
+          qcod: number;
+          saved_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          qcod?: number;
+          saved_at?: string;
+        };
+        Relationships: [];
+      };
       kateg: {
         Row: {
           kcod: number;
@@ -102,7 +201,12 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      increment_wrong_question: {
+        Args: { p_user_id: string; p_qcod: number };
+        Returns: undefined;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
@@ -113,6 +217,10 @@ export type Kateg = Database['public']['Tables']['kateg']['Row'];
 export type Quest = Database['public']['Tables']['quest']['Row'];
 export type Answer = Database['public']['Tables']['answer']['Row'];
 export type Numbs = Database['public']['Tables']['numbs']['Row'];
+export type UserExamResult = Database['public']['Tables']['user_exam_results']['Row'];
+export type UserExamAnswer = Database['public']['Tables']['user_exam_answers']['Row'];
+export type UserWrongQuestion = Database['public']['Tables']['user_wrong_questions']['Row'];
+export type UserSavedQuestion = Database['public']['Tables']['user_saved_questions']['Row'];
 
 // A question with its answers bundled
 export type QuestWithAnswers = Quest & {

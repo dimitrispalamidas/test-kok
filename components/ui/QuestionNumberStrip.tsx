@@ -7,6 +7,8 @@ type QuestionNumberStripProps = {
   total: number;
   current: number;
   answered: Set<number>;
+  correct?: Set<number>;
+  incorrect?: Set<number>;
   onNavigate: (index: number) => void;
 };
 
@@ -14,6 +16,8 @@ export function QuestionNumberStrip({
   total,
   current,
   answered,
+  correct,
+  incorrect,
   onNavigate,
 }: QuestionNumberStripProps) {
   const currentRef = useRef<HTMLButtonElement>(null);
@@ -30,6 +34,8 @@ export function QuestionNumberStrip({
     <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {Array.from({ length: total }, (_, index) => {
         const isCurrent = index === current;
+        const isCorrect = correct?.has(index) ?? false;
+        const isIncorrect = incorrect?.has(index) ?? false;
         const isAnswered = answered.has(index);
 
         return (
@@ -45,9 +51,20 @@ export function QuestionNumberStrip({
               isCurrent &&
                 'bg-primary text-primary-foreground ring-2 ring-primary/30',
               !isCurrent &&
+                isCorrect &&
+                'border-2 border-success bg-success/15 text-success',
+              !isCurrent &&
+                !isCorrect &&
+                isIncorrect &&
+                'border-2 border-destructive bg-destructive/15 text-destructive',
+              !isCurrent &&
+                !isCorrect &&
+                !isIncorrect &&
                 isAnswered &&
                 'border-2 border-warning bg-warning/10 text-warning',
               !isCurrent &&
+                !isCorrect &&
+                !isIncorrect &&
                 !isAnswered &&
                 'border border-border/60 bg-card text-muted-foreground hover:border-primary/40'
             )}

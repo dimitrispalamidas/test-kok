@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { BottomNav } from '@/components/nav/BottomNav';
 
-const FULLSCREEN_PREFIXES = ['/exam/', '/practice/'];
+const FULLSCREEN_PREFIXES = ['/exam/', '/practice/', '/auth'];
 
 type AppShellProps = {
   children: React.ReactNode;
