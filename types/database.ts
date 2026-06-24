@@ -67,18 +67,21 @@ export type Database = {
           qcod: number;
           wrong_count: number;
           last_wrong_at: string;
+          selected_aaa: number | null;
         };
         Insert: {
           user_id: string;
           qcod: number;
           wrong_count?: number;
           last_wrong_at?: string;
+          selected_aaa?: number | null;
         };
         Update: {
           user_id?: string;
           qcod?: number;
           wrong_count?: number;
           last_wrong_at?: string;
+          selected_aaa?: number | null;
         };
         Relationships: [];
       };
@@ -203,7 +206,7 @@ export type Database = {
     Views: Record<string, never>;
     Functions: {
       increment_wrong_question: {
-        Args: { p_user_id: string; p_qcod: number };
+        Args: { p_user_id: string; p_qcod: number; p_selected_aaa?: number | null };
         Returns: undefined;
       };
     };

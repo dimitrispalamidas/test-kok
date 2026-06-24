@@ -56,7 +56,7 @@ export function TestOptionsList({
     {
       id: 'weak',
       icon: Target,
-      title: 'Αδύναμα σου',
+      title: 'Τα λάθη σου',
       subtitle: 'Εξάσκηση στις ερωτήσεις που έκανες λάθος',
       href: `/practice/${kcod}?mode=weak`,
     },

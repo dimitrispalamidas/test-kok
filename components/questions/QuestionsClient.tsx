@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import {
   getCategorySavedQuestions,
   getCategoryWrongQuestions,
+  type WrongQuestWithAnswers,
 } from '@/actions/questions';
 import type { CategoryWithStats } from '@/actions/categories';
 import { CategorySelector } from '@/components/home/CategorySelector';
@@ -22,7 +23,7 @@ type Tab = 'saved' | 'wrong';
 
 export function QuestionsClient({ categories }: QuestionsClientProps) {
   const searchParams = useSearchParams();
-  const initialTab = (searchParams.get('tab') as Tab) ?? 'saved';
+  const initialTab = (searchParams.get('tab') as Tab) ?? 'wrong';
   const [tab, setTab] = useState<Tab>(initialTab);
   const { kcod } = useCategory();
 
@@ -36,7 +37,7 @@ export function QuestionsClient({ categories }: QuestionsClientProps) {
     queryFn: () => getCategorySavedQuestions(kcod),
   });
 
-  const { data: wrongQuestions = [], isLoading: wrongLoading } = useQuery({
+  const { data: wrongQuestions = [], isLoading: wrongLoading } = useQuery<WrongQuestWithAnswers[]>({
     queryKey: ['wrong-questions', kcod],
     queryFn: () => getCategoryWrongQuestions(kcod),
   });
@@ -48,28 +49,28 @@ export function QuestionsClient({ categories }: QuestionsClientProps) {
     count: number;
   }[] = [
     {
-      id: 'saved',
-      label: `Αποθηκευμένες (${savedQuestions.length})`,
-      icon: Bookmark,
-      count: savedQuestions.length,
-    },
-    {
       id: 'wrong',
       label: `Λανθασμένες (${wrongQuestions.length})`,
       icon: X,
       count: wrongQuestions.length,
     },
+    {
+      id: 'saved',
+      label: `Αποθηκευμένες (${savedQuestions.length})`,
+      icon: Bookmark,
+      count: savedQuestions.length,
+    },
   ];
 
-  const activeQuestions = tab === 'saved' ? savedQuestions : wrongQuestions;
-  const isLoading = tab === 'saved' ? savedLoading : wrongLoading;
+  const activeQuestions = tab === 'wrong' ? wrongQuestions : savedQuestions;
+  const isLoading = tab === 'wrong' ? wrongLoading : savedLoading;
 
   return (
     <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top lg:max-w-3xl">
       <header>
         <h1 className="text-2xl font-bold">Ερωτήσεις</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Αποθηκευμένες και λανθασμένες ερωτήσεις
+          Λανθασμένες και αποθηκευμένες ερωτήσεις
         </p>
       </header>
 
@@ -119,7 +120,7 @@ export function QuestionsClient({ categories }: QuestionsClientProps) {
                 question={question}
                 questionNumber={index + 1}
                 totalQuestions={activeQuestions.length}
-                selectedAaa={null}
+                selectedAaa={tab === 'wrong' ? (question as WrongQuestWithAnswers).selectedAaa : null}
                 onSelect={() => {}}
                 revealMode
                 disabled

@@ -75,7 +75,7 @@ export function PracticeClient({
     mode === 'quick'
       ? 'Γρήγορο Τεστ'
       : mode === 'weak'
-        ? 'Αδύναμα σου'
+        ? 'Τα λάθη σου'
         : (theme ?? 'Ελεύθερη Εξάσκηση');
   const currentQuestion = questions[currentIndex];
 

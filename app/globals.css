@@ -10,7 +10,7 @@
   --card-foreground: oklch(0.205 0.025 240);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.205 0.025 240);
-  --primary: oklch(0.72 0.14 180);
+  --primary: oklch(0.69 0.122 216.2);
   --primary-foreground: oklch(0.15 0.02 240);
   --secondary: oklch(0.955 0.018 240);
   --secondary-foreground: oklch(0.28 0.04 240);
@@ -25,7 +25,7 @@
   --success-foreground: oklch(0.985 0 0);
   --border: oklch(0.905 0.018 240);
   --input: oklch(0.905 0.018 240);
-  --ring: oklch(0.72 0.14 180);
+  --ring: oklch(0.69 0.122 216.2);
   --radius: 1rem;
 }
 
@@ -36,7 +36,7 @@
   --card-foreground: oklch(0.96 0.008 240);
   --popover: oklch(0.18 0.035 250);
   --popover-foreground: oklch(0.96 0.008 240);
-  --primary: oklch(0.78 0.14 180);
+  --primary: oklch(0.74 0.122 216.2);
   --primary-foreground: oklch(0.14 0.03 250);
   --secondary: oklch(0.22 0.04 250);
   --secondary-foreground: oklch(0.96 0.008 240);
@@ -51,7 +51,7 @@
   --success-foreground: oklch(0.14 0.03 250);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.78 0.14 180);
+  --ring: oklch(0.74 0.122 216.2);
 }
 
 @theme inline {
@@ -120,6 +120,6 @@ body {
 /* Glow effect for FAB */
 .fab-glow {
   box-shadow:
-    0 0 20px oklch(0.78 0.14 180 / 40%),
+    0 0 20px oklch(0.69 0.122 216.2 / 40%),
     0 4px 12px oklch(0 0 0 / 30%);
 }

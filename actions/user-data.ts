@@ -75,10 +75,14 @@ export async function saveExamResult(params: {
       }))
     );
 
-    // Upsert wrong questions counter
-    const wrongQcods = params.answers.filter((a) => !a.isCorrect).map((a) => a.qcod);
-    for (const qcod of wrongQcods) {
-      await supabase.rpc('increment_wrong_question', { p_user_id: user.id, p_qcod: qcod });
+    // Upsert wrong questions counter, storing the last selected answer
+    const wrongAnswers = params.answers.filter((a) => !a.isCorrect);
+    for (const a of wrongAnswers) {
+      await supabase.rpc('increment_wrong_question', {
+        p_user_id: user.id,
+        p_qcod: a.qcod,
+        p_selected_aaa: a.selectedAaa,
+      });
     }
   }
 

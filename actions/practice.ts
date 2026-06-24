@@ -33,15 +33,14 @@ export async function getPracticeQuestions(
       .select('*')
       .eq('qkateg', kcod)
       .eq('qlang', LANG.EL)
-      .ilike('qbook', `${theme}%`)
-      .order('qcod');
+      .ilike('qbook', `${theme}%`);
 
     if (error) {
       throw new Error(`Failed to load questions: ${error.message}`);
     }
 
-    const filtered = (questions ?? []).filter(
-      (q) => extractTheme(q.qbook) === theme
+    const filtered = shuffle(
+      (questions ?? []).filter((q) => extractTheme(q.qbook) === theme)
     );
 
     const questionsWithAnswers = await attachAnswers(supabase, filtered);

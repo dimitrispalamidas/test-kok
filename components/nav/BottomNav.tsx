@@ -18,8 +18,8 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { href: '/', label: 'Αρχική', icon: Grid2X2 },
-  { href: '/start', label: 'Τεστ', icon: ClipboardList },
   { href: '/questions', label: 'Ερωτήσεις', icon: BookOpen },
+  { href: '/start', label: 'Τεστ', icon: ClipboardList },
   { href: '/ranking', label: 'Κατάταξη', icon: Trophy },
   { href: '/profile', label: 'Προφίλ', icon: User },
 ];
