@@ -71,8 +71,8 @@ export function QuestionCard({
       <h2
         className={
           isExam
-            ? 'text-center text-base font-medium leading-relaxed sm:text-lg'
-            : 'text-lg font-semibold leading-relaxed sm:text-xl'
+            ? 'text-center text-xl font-extrabold leading-snug tracking-tight sm:text-2xl'
+            : 'text-lg font-bold leading-snug tracking-tight'
         }
       >
         {question.qlect}

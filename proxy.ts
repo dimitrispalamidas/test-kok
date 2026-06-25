@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { Database } from '@/types/database';
 
-const PUBLIC_PATHS = ['/auth', '/auth/callback'];
+const PUBLIC_PATHS = ['/auth', '/auth/login', '/auth/callback'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -38,14 +38,14 @@ export async function proxy(request: NextRequest) {
   );
 
   if (!user && !isPublic) {
-    // Unauthenticated → redirect to landing/login page
+    // Unauthenticated → redirect to login page
     const url = request.nextUrl.clone();
-    url.pathname = '/auth';
+    url.pathname = '/auth/login';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname === '/auth') {
+  if (user && (pathname === '/auth' || pathname === '/auth/login')) {
     // Already logged in → go to app
     const url = request.nextUrl.clone();
     url.pathname = '/';

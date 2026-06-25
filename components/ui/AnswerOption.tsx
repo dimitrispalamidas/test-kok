@@ -82,7 +82,7 @@ export function AnswerOption({
         onClick={isInteractive ? onSelect : undefined}
         disabled={disabled || !isInteractive}
         className={cn(
-          'w-full rounded-2xl px-5 py-4 text-left text-sm leading-relaxed transition-all duration-200',
+          'w-full rounded-2xl px-5 py-4 text-left text-base font-bold leading-snug transition-all duration-200',
           stateStyles[state],
           isInteractive && 'cursor-pointer active:scale-[0.99]'
         )}
@@ -98,13 +98,13 @@ export function AnswerOption({
       onClick={isInteractive ? onSelect : undefined}
       disabled={disabled || !isInteractive}
       className={cn(
-        'flex w-full items-start gap-3 rounded-2xl px-4 py-3.5 text-left text-sm transition-all duration-200',
+        'flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left text-base font-semibold transition-all duration-200',
         stateStyles[state],
         isInteractive && 'cursor-pointer active:scale-[0.98]'
       )}
     >
       <AnswerBadge index={index} state={state} />
-      <span className="pt-1 leading-relaxed">{label}</span>
+      <span className="leading-snug">{label}</span>
     </button>
   );
 }

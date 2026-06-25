@@ -34,8 +34,8 @@ export function ExamActionBar({
           onClick={onSkip}
           disabled={isSubmitting || (revealed && isLast)}
           className={cn(
-            'inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border',
-            'px-3 py-3.5 text-sm font-medium transition-colors hover:border-primary/30',
+            'inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-border',
+            'px-3 py-3.5 text-sm font-bold uppercase tracking-wide transition-colors hover:border-primary/30',
             'disabled:opacity-40'
           )}
         >
@@ -49,7 +49,7 @@ export function ExamActionBar({
           disabled={confirmDisabled || isSubmitting}
           className={cn(
             'inline-flex flex-[1.4] items-center justify-center gap-2 rounded-2xl',
-            'px-3 py-3.5 text-sm font-semibold',
+            'px-3 py-3.5 text-sm font-extrabold uppercase tracking-wide',
             'transition-all active:scale-[0.98] disabled:opacity-40',
             revealed && isLast
               ? 'bg-success text-success-foreground'

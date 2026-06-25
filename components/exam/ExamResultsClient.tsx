@@ -133,7 +133,7 @@ export function ExamResultsClient({ kcod }: ExamResultsClientProps) {
 
       {wrongQuestions.length > 0 && (
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold">
+          <h2 className="section-title">
             Λάθος απαντήσεις ({wrongQuestions.length})
           </h2>
 

@@ -66,12 +66,10 @@ export function QuestionsClient({ categories }: QuestionsClientProps) {
   const isLoading = tab === 'wrong' ? wrongLoading : savedLoading;
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top lg:max-w-3xl">
-      <header>
-        <h1 className="text-2xl font-bold">Ερωτήσεις</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Λανθασμένες και αποθηκευμένες ερωτήσεις
-        </p>
+    <div className="mx-auto max-w-lg space-y-6 px-4 py-6 safe-top lg:max-w-3xl">
+      <header className="space-y-1">
+        <p className="page-eyebrow">Επανάληψη</p>
+        <h1 className="page-title">Ερωτήσεις</h1>
       </header>
 
       <CategorySelector categories={categories} />
@@ -83,10 +81,10 @@ export function QuestionsClient({ categories }: QuestionsClientProps) {
             type="button"
             onClick={() => setTab(id)}
             className={cn(
-              'inline-flex shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition-colors',
+              'inline-flex shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition-colors',
               tab === id
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-card text-muted-foreground'
+                : 'bg-card text-muted-foreground hover:text-foreground'
             )}
           >
             <Icon className="size-4" />

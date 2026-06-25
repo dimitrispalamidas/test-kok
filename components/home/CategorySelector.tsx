@@ -84,24 +84,26 @@ function CategorySelectorInner({
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'flex w-full items-center gap-3 rounded-2xl border border-primary/30',
+          'flex w-full items-center gap-4 rounded-2xl border-2 border-border/60',
           'bg-card px-4 py-3.5 text-left transition-colors',
-          'hover:border-primary/50 active:scale-[0.99]'
+          'hover:border-primary/40 active:scale-[0.99]'
         )}
       >
-        <span className="flex size-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
-          <Icon className="size-5" />
+        <span className="flex size-12 items-center justify-center rounded-2xl bg-cyan-400/15 text-cyan-400">
+          <Icon className="size-6" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground">Κατηγορία Οχήματος</p>
-          <p className="truncate font-semibold">{label}</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Κατηγορία Οχήματος
+          </p>
+          <p className="card-title truncate">{label}</p>
         </div>
-        <span className="rounded-lg bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
+        <span className="rounded-lg bg-primary/15 px-2.5 py-1 text-sm font-extrabold text-primary">
           {short}
         </span>
         <ChevronDown
           className={cn(
-            'size-4 text-muted-foreground transition-transform',
+            'size-5 text-muted-foreground transition-transform',
             open && 'rotate-180'
           )}
         />
@@ -135,17 +137,17 @@ function CategorySelectorInner({
               >
                 <span
                   className={cn(
-                    'flex size-9 items-center justify-center rounded-lg',
+                    'flex size-10 items-center justify-center rounded-xl',
                     isSelected
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground'
                   )}
                 >
-                  <CatIcon className="size-4" />
+                  <CatIcon className="size-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{catLabel}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="card-title truncate">{catLabel}</p>
+                  <p className="card-subtitle">
                     {cat.questionCount} ερωτήσεις · {cat.ktime} λεπτά
                   </p>
                 </div>

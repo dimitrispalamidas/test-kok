@@ -22,12 +22,10 @@ export function StartTestClient({
   const examCount = selected?.examQuestionCount ?? 0;
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top lg:max-w-3xl">
-      <header>
-        <h1 className="text-2xl font-bold">Τεστ</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Επίλεξε τον τύπο εξέτασης
-        </p>
+    <div className="mx-auto max-w-lg space-y-6 px-4 py-6 safe-top lg:max-w-3xl">
+      <header className="space-y-1">
+        <p className="page-eyebrow">Εξάσκηση</p>
+        <h1 className="page-title">Τεστ</h1>
       </header>
 
       <CategorySelector categories={categories} />

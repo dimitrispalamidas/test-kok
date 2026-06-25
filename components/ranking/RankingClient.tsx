@@ -43,30 +43,28 @@ export function RankingClient({
   const hasData = stats.totalTests > 0;
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top lg:max-w-3xl">
-      <header>
-        <h1 className="text-2xl font-bold">Κατάταξη</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Γραφήματα, κατάταξη και επιτεύγματα
-        </p>
+    <div className="mx-auto max-w-lg space-y-6 px-4 py-6 safe-top lg:max-w-3xl">
+      <header className="space-y-1">
+        <p className="page-eyebrow">Πρόοδος</p>
+        <h1 className="page-title">Κατάταξη</h1>
       </header>
 
       <CategorySelector categories={categories} />
 
-      <div className="flex rounded-2xl border border-border/60 bg-card p-1">
+      <div className="flex rounded-2xl border border-border/60 bg-card p-1.5">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setTab(id)}
             className={cn(
-              'flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-medium transition-colors',
+              'flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-colors',
               tab === id
                 ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            <Icon className="size-3.5" />
+            <Icon className="size-4" />
             {label}
           </button>
         ))}
@@ -87,22 +85,29 @@ export function RankingClient({
             icon={BarChart3}
             value={String(stats.totalTests)}
             label="Συνολικά Τεστ"
+            iconBg="bg-primary/15"
+            iconColor="text-primary"
           />
           <StatCard
             icon={Target}
             value={`${successRate}%`}
             label="Ποσοστό Επιτυχίας"
+            iconBg="bg-success/15"
+            iconColor="text-success"
           />
           <StatCard
             icon={Trophy}
             value={String(stats.completedExams)}
             label="Επιτυχημένα"
+            iconBg="bg-emerald-400/15"
+            iconColor="text-emerald-400"
           />
           <StatCard
             icon={Award}
             value={String(stats.bestStreak)}
             label="Καλύτερο Σερί"
-            accent="warning"
+            iconBg="bg-warning/15"
+            iconColor="text-warning"
           />
         </div>
       ) : (
@@ -121,23 +126,24 @@ function StatCard({
   icon: Icon,
   value,
   label,
-  accent = 'primary',
+  iconBg,
+  iconColor,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   value: string;
   label: string;
-  accent?: 'primary' | 'warning';
+  iconBg: string;
+  iconColor: string;
 }) {
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-card p-4">
-      <Icon
-        className={cn(
-          'size-5',
-          accent === 'warning' ? 'text-warning' : 'text-primary'
-        )}
-      />
-      <p className="text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-5">
+      <span className={cn('flex size-10 items-center justify-center rounded-xl', iconBg)}>
+        <Icon className={cn('size-5', iconColor)} />
+      </span>
+      <div>
+        <p className="text-3xl font-extrabold tabular-nums">{value}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">{label}</p>
+      </div>
     </div>
   );
 }

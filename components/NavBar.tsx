@@ -37,7 +37,7 @@ export async function NavBar() {
             </Link>
           ) : (
             <Link
-              href="/auth"
+              href="/auth/login"
               className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <LogIn className="size-3.5" />

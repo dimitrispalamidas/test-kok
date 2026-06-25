@@ -43,8 +43,8 @@ export function CategoryCard({ category }: CategoryCardProps) {
 
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">{label}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{category.klect}</p>
+          <h2 className="card-title">{label}</h2>
+          <p className="card-subtitle mt-1">{category.klect}</p>
         </div>
 
         <dl className="grid grid-cols-2 gap-3 text-sm">

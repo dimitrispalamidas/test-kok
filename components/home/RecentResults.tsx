@@ -1,4 +1,4 @@
-import { CircleCheck, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import type { getExamHistory } from '@/actions/user-data';
 import { cn } from '@/lib/utils';
 
@@ -29,41 +29,54 @@ export function RecentResults({ history }: RecentResultsProps) {
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center gap-2">
-        <CircleCheck className="size-4 text-primary" />
-        <h2 className="font-semibold">Πρόσφατα Αποτελέσματα</h2>
-      </div>
+      <h2 className="section-title">Πρόσφατα Αποτελέσματα</h2>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {history.map((entry) => (
           <article
             key={entry.id}
             className="rounded-2xl border border-border/60 bg-card p-4"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-semibold">{entry.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(entry.created_at)}
-                </p>
-              </div>
+            <div className="flex items-center gap-3">
+              {/* Pass/fail icon */}
               <span
                 className={cn(
-                  'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold',
-                  entry.passed
-                    ? 'bg-success/15 text-success'
-                    : 'bg-destructive/15 text-destructive'
+                  'flex size-10 shrink-0 items-center justify-center rounded-xl',
+                  entry.passed ? 'bg-success/15' : 'bg-destructive/15'
                 )}
               >
                 {entry.passed ? (
-                  <CircleCheck className="size-3.5" />
+                  <CheckCircle2 className="size-5 text-success" />
                 ) : (
-                  <XCircle className="size-3.5" />
+                  <XCircle className="size-5 text-destructive" />
                 )}
-                {entry.percentage}%
               </span>
+
+              {/* Title & date */}
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold leading-tight">{entry.title}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {formatDate(entry.created_at)}
+                </p>
+              </div>
+
+              {/* Score badge */}
+              <div className="text-right">
+                <p
+                  className={cn(
+                    'text-xl font-extrabold tabular-nums',
+                    entry.passed ? 'text-success' : 'text-destructive'
+                  )}
+                >
+                  {entry.percentage}%
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {entry.score}/{entry.total}
+                </p>
+              </div>
             </div>
 
+            {/* Progress bar */}
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
               <div
                 className={cn(
@@ -73,10 +86,6 @@ export function RecentResults({ history }: RecentResultsProps) {
                 style={{ width: `${entry.percentage}%` }}
               />
             </div>
-
-            <p className="mt-2 text-sm tabular-nums text-muted-foreground">
-              {entry.score}/{entry.total}
-            </p>
           </article>
         ))}
       </div>

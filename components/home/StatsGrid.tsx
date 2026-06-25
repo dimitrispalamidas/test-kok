@@ -1,30 +1,24 @@
 import { BarChart3, ClipboardList, Flame, Target } from 'lucide-react';
 import type { CategoryStats } from '@/lib/category-stats';
-import { cn } from '@/lib/utils';
 
 type StatCardProps = {
   icon: React.ComponentType<{ className?: string }>;
   value: string;
   label: string;
-  accent?: 'primary' | 'warning';
+  iconBg: string;
+  iconColor: string;
 };
 
-function StatCard({ icon: Icon, value, label, accent = 'primary' }: StatCardProps) {
+function StatCard({ icon: Icon, value, label, iconBg, iconColor }: StatCardProps) {
   return (
-    <div
-      className={cn(
-        'flex flex-col gap-2 rounded-2xl border border-border/60 bg-card p-4',
-        'transition-colors hover:border-primary/20'
-      )}
-    >
-      <Icon
-        className={cn(
-          'size-5',
-          accent === 'warning' ? 'text-warning' : 'text-primary'
-        )}
-      />
-      <p className="text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-5">
+      <span className={`flex size-10 items-center justify-center rounded-xl ${iconBg}`}>
+        <Icon className={`size-5 ${iconColor}`} />
+      </span>
+      <div>
+        <p className="text-3xl font-extrabold tabular-nums">{value}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">{label}</p>
+      </div>
     </div>
   );
 }
@@ -49,22 +43,29 @@ export function StatsGrid({ examQuestionCount = 0, stats }: StatsGridProps) {
         icon={BarChart3}
         value={String(totalTests)}
         label="Συνολικά Τεστ"
+        iconBg="bg-primary/15"
+        iconColor="text-primary"
       />
       <StatCard
         icon={Target}
         value={`${successRate}%`}
         label="Ποσοστό Επιτυχίας"
+        iconBg="bg-success/15"
+        iconColor="text-success"
       />
       <StatCard
         icon={Flame}
         value={String(bestStreak)}
         label="Καλύτερο Σερί"
-        accent="warning"
+        iconBg="bg-warning/15"
+        iconColor="text-warning"
       />
       <StatCard
         icon={ClipboardList}
         value={`${completedExams}/${examQuestionCount > 0 ? '∞' : '0'}`}
         label="Τεστ Ολοκλήρωσης"
+        iconBg="bg-primary/15"
+        iconColor="text-primary"
       />
     </div>
   );

@@ -11,7 +11,6 @@ import { StatsGrid } from '@/components/home/StatsGrid';
 import { useCategory } from '@/hooks/use-category';
 import { useCategoryStats } from '@/hooks/use-category-stats';
 import type { CategoryCounts } from '@/lib/category-stats';
-import { cn } from '@/lib/utils';
 
 const categorySerializer = createSerializer({ k: parseAsInteger });
 
@@ -36,25 +35,25 @@ export function Dashboard({
     categories.find((c) => c.kcod === kcod) ?? categories[0] ?? null;
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 px-4 py-6 safe-top lg:max-w-3xl">
-      <header>
-        <h1 className="text-2xl font-bold">Αρχική</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Καλωσήρθες</p>
+    <div className="mx-auto max-w-lg space-y-6 px-4 py-6 safe-top lg:max-w-3xl">
+      {/* Header */}
+      <header className="space-y-1">
+        <p className="page-eyebrow">Καλωσήρθες</p>
+        <h1 className="page-title">Έτοιμος για εξάσκηση;</h1>
       </header>
 
       <CategorySelector categories={categories} />
 
+      {/* CTA */}
       <Link
         href={categorySerializer('/start', { k: kcod })}
-        className={cn(
-          'flex w-full items-center gap-3 rounded-2xl bg-primary px-5 py-4',
-          'font-semibold text-primary-foreground shadow-lg shadow-primary/20',
-          'transition-transform active:scale-[0.98]'
-        )}
+        className="group flex w-full items-center gap-4 rounded-2xl bg-primary px-6 py-5 font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:brightness-110 active:scale-[0.98]"
       >
-        <Play className="size-5 fill-current" />
-        <span className="flex-1 text-left">Έναρξη Τεστ</span>
-        <ArrowRight className="size-5" />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
+          <Play className="size-5 fill-current" />
+        </span>
+        <span className="flex-1 text-left text-lg">Έναρξη Τεστ</span>
+        <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
       </Link>
 
       <StatsGrid

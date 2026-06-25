@@ -4,7 +4,6 @@ import {
   BookOpen,
   ChevronRight,
   ClipboardList,
-  Play,
   Target,
   Zap,
 } from 'lucide-react';
@@ -23,6 +22,8 @@ type TestOption = {
   title: string;
   subtitle: string;
   href: string;
+  iconBg: string;
+  iconColor: string;
 };
 
 export function TestOptionsList({
@@ -38,6 +39,8 @@ export function TestOptionsList({
       title: 'Γρήγορο Τεστ',
       subtitle: '10 ερωτήσεις από διαφορετικά θέματα',
       href: `/practice/${kcod}?mode=quick`,
+      iconBg: 'bg-amber-400/15',
+      iconColor: 'text-amber-400',
     },
     {
       id: 'exam',
@@ -45,6 +48,8 @@ export function TestOptionsList({
       title: 'Προσομοίωση Εξέτασης',
       subtitle: `${examQuestionCount} ερωτήσεις · Πραγματική κατανομή ΚΟΚ`,
       href: `/exam/${kcod}`,
+      iconBg: 'bg-emerald-400/15',
+      iconColor: 'text-emerald-400',
     },
     {
       id: 'topics',
@@ -52,6 +57,8 @@ export function TestOptionsList({
       title: 'Ανά Θέμα',
       subtitle: `${topicCount} θεματικές ενότητες`,
       href: '/topics',
+      iconBg: 'bg-blue-400/15',
+      iconColor: 'text-blue-400',
     },
     {
       id: 'weak',
@@ -59,37 +66,38 @@ export function TestOptionsList({
       title: 'Τα λάθη σου',
       subtitle: 'Εξάσκηση στις ερωτήσεις που έκανες λάθος',
       href: `/practice/${kcod}?mode=weak`,
+      iconBg: 'bg-rose-400/15',
+      iconColor: 'text-rose-400',
     },
   ];
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Play className="size-4 text-primary" />
-        <h2 className="font-semibold">Επιλογές</h2>
-      </div>
+      <h2 className="section-title">Επιλογές</h2>
 
-      <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
-        {options.map((option, idx) => {
+      <div className="space-y-3">
+        {options.map((option) => {
           const Icon = option.icon;
 
           return (
             <Link
               key={option.id}
               href={option.href}
-              className={cn(
-                'flex items-center gap-3 px-4 py-4 transition-colors hover:bg-accent/40',
-                idx > 0 && 'border-t border-border/40'
-              )}
+              className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card px-4 py-4 transition-colors hover:border-primary/30"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                <Icon className="size-5" />
+              <span
+                className={cn(
+                  'flex size-12 shrink-0 items-center justify-center rounded-2xl',
+                  option.iconBg
+                )}
+              >
+                <Icon className={cn('size-6', option.iconColor)} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-medium">{option.title}</p>
-                <p className="text-sm text-muted-foreground">{option.subtitle}</p>
+                <p className="card-title">{option.title}</p>
+                <p className="card-subtitle">{option.subtitle}</p>
               </div>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
             </Link>
           );
         })}

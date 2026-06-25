@@ -4,17 +4,15 @@ import {
   Calendar,
   Car,
   CheckCircle2,
-  ExternalLink,
+  ChevronDown,
   FileText,
   Gauge,
   Heart,
   Leaf,
   LogIn,
   LogOut,
-  Shield,
   Star,
   TriangleAlert,
-  Trophy,
   User,
   Wrench,
   XCircle,
@@ -43,20 +41,78 @@ type ProfileClientProps = {
 };
 
 const infoItems = [
-  { icon: Wrench, label: 'Αλλαγή Λάστιχου', locked: true },
-  { icon: Car, label: 'Έλεγχοι Πριν την Οδήγηση', locked: true },
-  { icon: Leaf, label: 'Οικονομική Οδήγηση', locked: true },
-  { icon: TriangleAlert, label: 'Κατάσταση Έκτακτης Ανάγκης', locked: true },
-  { icon: Gauge, label: 'Λυχνίες Ταμπλό', locked: true },
-  { icon: Calendar, label: 'Πρόγραμμα Συντήρησης', locked: true },
-  { icon: Heart, label: 'Πρώτες Βοήθειες', locked: true },
-  { icon: FileText, label: 'Μετά από Ατύχημα', locked: true },
-];
-
-const aboutItems = [
-  { icon: Shield, label: 'Πολιτική Απορρήτου' },
-  { icon: FileText, label: 'Όροι Χρήσης' },
-  { icon: Star, label: 'Αξιολόγηση Εφαρμογής' },
+  {
+    id: 'tire',
+    icon: Wrench,
+    label: 'Αλλαγή Λάστιχου',
+    iconBg: 'bg-blue-400/15',
+    iconColor: 'text-blue-400',
+    content:
+      'Σταμάτα σε ασφαλές σημείο, ανάψε τα αλάρμ και βάλε τρίγωνο. Χαλάρωσε τα μπουλόνια πριν σηκώσεις το αυτοκίνητο με το jack. Αντικατάστησε το λάστιχο, σφίξε σταυρωτά και έλεγξε την πίεση αέρα πριν ξαναβγείς στον δρόμο.',
+  },
+  {
+    id: 'checks',
+    icon: Car,
+    label: 'Έλεγχοι Πριν την Οδήγηση',
+    iconBg: 'bg-cyan-400/15',
+    iconColor: 'text-cyan-400',
+    content:
+      'Έλεγξε φώτα, φρένα, καθρέφτες και σήμανση. Βεβαιώσου ότι δεν υπάρχουν εμπόδια γύρω από το όχημα. Ρύθμισε κάθισμα, ζώνη και καθρέφτες πριν κινηθείς.',
+  },
+  {
+    id: 'eco',
+    icon: Leaf,
+    label: 'Οικονομική Οδήγηση',
+    iconBg: 'bg-emerald-400/15',
+    iconColor: 'text-emerald-400',
+    content:
+      'Κράτα σταθερή ταχύτητα, απόφυγε απότομα φρενάρισμα και επιτάχυνση. Κλείσε τα παράθυρα σε υψηλές ταχύτητες, αφαίρεσε περιττό βάρος και κράτα τα λάστιχα στη σωστή πίεση για λιγότερη κατανάλωση.',
+  },
+  {
+    id: 'emergency',
+    icon: TriangleAlert,
+    label: 'Κατάσταση Έκτακτης Ανάγκης',
+    iconBg: 'bg-amber-400/15',
+    iconColor: 'text-amber-400',
+    content:
+      'Σε ατύχημα: προστατεύεις ζωές, καλείς 112, σηματοδοτείς το σημείο και δεν μετακινείς τραυματίες εκτός αν υπάρχει άμεσος κίνδυνος. Κράτα ψυχραιμία και ακολούθησε τις οδηγίες των υπηρεσιών.',
+  },
+  {
+    id: 'dashboard',
+    icon: Gauge,
+    label: 'Λυχνίες Ταμπλό',
+    iconBg: 'bg-violet-400/15',
+    iconColor: 'text-violet-400',
+    content:
+      'Κόκκινη λυχνία: σταμάτα αμέσως και έλεγξε. Κίτρινη: προσοχή, έλεγχος σύντομα. Πράσινη/μπλε: κανονική λειτουργία. Μην αγνοείς επαναλαμβανόμενα σήματα — σημαίνουν βλάβη ή ανάγκη συντήρησης.',
+  },
+  {
+    id: 'maintenance',
+    icon: Calendar,
+    label: 'Πρόγραμμα Συντήρησης',
+    iconBg: 'bg-sky-400/15',
+    iconColor: 'text-sky-400',
+    content:
+      'Έλεγχος λαδιών, φίλτρων, φρένων και λαστιχών ανά χιλιόμετρα ή χρόνο. Τακτικό KTEO και service βοηθούν στην ασφάλεια και μειώνουν το κόστος επισκευών μακροπρόθεσμα.',
+  },
+  {
+    id: 'firstaid',
+    icon: Heart,
+    label: 'Πρώτες Βοήθειες',
+    iconBg: 'bg-rose-400/15',
+    iconColor: 'text-rose-400',
+    content:
+      'Κάλεσε 112, ασφάλισε το σημείο και μην κινείς σοβαρά τραυματίες. Σε αιμορραγία πίεσε με καθαρό ύφασμα. Σε απώλεια αισθήσεων έλεγξε αναπνοή και ακολούθησε βασικές οδηγίες πρώτων βοηθειών μέχρι να φτάσει βοήθεια.',
+  },
+  {
+    id: 'accident',
+    icon: FileText,
+    label: 'Μετά από Ατύχημα',
+    iconBg: 'bg-orange-400/15',
+    iconColor: 'text-orange-400',
+    content:
+      'Κατέγραψε στοιχεία, φωτογραφίες και μάρτυρες. Μην παραδεχτείς ευθύνη χωρίς εξέταση. Ενημέρωσε ασφαλιστική και αστυνομία όπου απαιτείται. Κράτα αντίγραφα εγγράφων και επικοινώνησε με τη σχολή οδηγών αν χρειάζεσαι καθοδήγηση.',
+  },
 ];
 
 function formatDate(iso: string) {
@@ -75,6 +131,7 @@ export function ProfileClient({
 }: ProfileClientProps) {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const { history: filteredHistory, stats } = useCategoryStats(
     history,
     countsByCategory
@@ -98,13 +155,15 @@ export function ProfileClient({
     }
   };
 
+  const toggleInfo = (id: string) => {
+    setExpandedId((current) => (current === id ? null : id));
+  };
+
   return (
     <div className="mx-auto max-w-lg space-y-6 px-4 py-6 safe-top lg:max-w-3xl">
-      <header>
-        <h1 className="text-2xl font-bold">Προφίλ</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Ρυθμίσεις και χρήσιμες πληροφορίες
-        </p>
+      <header className="space-y-1">
+        <p className="page-eyebrow">Λογαριασμός</p>
+        <h1 className="page-title">Προφίλ</h1>
       </header>
 
       <CategorySelector categories={categories} />
@@ -117,8 +176,8 @@ export function ProfileClient({
               <User className="size-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{user.email}</p>
-              <p className="text-xs text-muted-foreground">Συνδεδεμένος</p>
+              <p className="card-title truncate">{user.email}</p>
+              <p className="card-subtitle">Συνδεδεμένος</p>
             </div>
             <button
               type="button"
@@ -138,18 +197,18 @@ export function ProfileClient({
           {/* Stats grid */}
           <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border/40 pt-4">
             <div className="text-center">
-              <p className="text-xl font-bold tabular-nums">{stats.totalTests}</p>
-              <p className="text-[10px] text-muted-foreground">Τεστ</p>
+              <p className="text-2xl font-extrabold tabular-nums">{stats.totalTests}</p>
+              <p className="text-xs text-muted-foreground">Τεστ</p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold tabular-nums">{successRate}%</p>
-              <p className="text-[10px] text-muted-foreground">Επιτυχία</p>
+              <p className="text-2xl font-extrabold tabular-nums text-success">{successRate}%</p>
+              <p className="text-xs text-muted-foreground">Επιτυχία</p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold tabular-nums">
+              <p className="text-2xl font-extrabold tabular-nums">
                 {stats.completedExams}
               </p>
-              <p className="text-[10px] text-muted-foreground">Επιτυχημένα</p>
+              <p className="text-xs text-muted-foreground">Επιτυχημένα</p>
             </div>
           </div>
 
@@ -181,7 +240,7 @@ export function ProfileClient({
             Συνδέσου για να αποθηκεύεις τα αποτελέσματά σου
           </p>
           <Link
-            href="/auth"
+            href="/auth/login"
             className={cn(
               'mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5',
               'text-sm font-semibold text-primary-foreground',
@@ -197,10 +256,7 @@ export function ProfileClient({
       {/* Exam history */}
       {user && filteredHistory.length > 0 && (
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Trophy className="size-4 text-primary" />
-            <h2 className="font-semibold">Ιστορικό Εξετάσεων</h2>
-          </div>
+          <h2 className="section-title">Ιστορικό Εξετάσεων</h2>
           <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
             {filteredHistory.map((entry, idx) => {
               const pct = entry.total > 0 ? Math.round((entry.score / entry.total) * 100) : 0;
@@ -239,54 +295,46 @@ export function ProfileClient({
       )}
 
       <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Car className="size-4 text-primary" />
-          <h2 className="font-semibold">Χρήσιμες Πληροφορίες</h2>
-        </div>
+        <h2 className="section-title">Χρήσιμες Πληροφορίες</h2>
 
         <div className="space-y-2">
-          {infoItems.map(({ icon: Icon, label, locked }) => (
-            <button
-              key={label}
-              type="button"
-              className={cn(
-                'flex w-full items-center gap-3 rounded-2xl border border-border/60',
-                'bg-card px-4 py-4 text-left transition-colors hover:border-primary/20'
-              )}
-            >
-              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                <Icon className="size-5" />
-              </span>
-              <span className="flex-1 font-medium">{label}</span>
-              {locked && (
-                <span className="text-xs text-muted-foreground">🔒</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </section>
+          {infoItems.map(({ id, icon: Icon, label, content, iconBg, iconColor }) => {
+            const isExpanded = expandedId === id;
 
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Shield className="size-4 text-muted-foreground" />
-          <h2 className="font-semibold">Σχετικά</h2>
-        </div>
+            return (
+              <div
+                key={id}
+                className={cn(
+                  'overflow-hidden rounded-2xl border border-border/60 bg-card transition-colors',
+                  isExpanded && 'border-primary/30'
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleInfo(id)}
+                  aria-expanded={isExpanded}
+                  className="flex w-full items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-accent/30"
+                >
+                  <span className={cn('flex size-11 shrink-0 items-center justify-center rounded-2xl', iconBg)}>
+                    <Icon className={cn('size-5', iconColor)} />
+                  </span>
+                  <span className="card-title flex-1">{label}</span>
+                  <ChevronDown
+                    className={cn(
+                      'size-5 shrink-0 text-muted-foreground transition-transform',
+                      isExpanded && 'rotate-180'
+                    )}
+                  />
+                </button>
 
-        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
-          {aboutItems.map(({ icon: Icon, label }, idx) => (
-            <button
-              key={label}
-              type="button"
-              className={cn(
-                'flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-accent/40',
-                idx > 0 && 'border-t border-border/40'
-              )}
-            >
-              <Icon className="size-5 text-muted-foreground" />
-              <span className="flex-1 font-medium">{label}</span>
-              <ExternalLink className="size-4 text-muted-foreground" />
-            </button>
-          ))}
+                {isExpanded && (
+                  <div className="border-t border-border/40 px-4 pb-4 pt-3">
+                    <p className="card-subtitle leading-relaxed">{content}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 

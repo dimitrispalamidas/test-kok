@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Nunito } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Suspense } from 'react';
@@ -8,10 +8,11 @@ import { AppShell } from '@/components/layout/AppShell';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import './globals.css';
 
-const inter = Inter({
-  subsets: ['greek', 'latin'],
-  variable: '--font-inter',
+const nunito = Nunito({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-nunito',
   display: 'swap',
+  weight: ['400', '500', '600', '700', '800', '900'],
 });
 
 export const metadata: Metadata = {
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0a1628',
+  themeColor: '#1c2830',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -48,7 +49,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="el" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} min-h-screen font-sans antialiased`}>
+      <body className={`${nunito.variable} min-h-screen font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

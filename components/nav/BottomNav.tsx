@@ -14,14 +14,15 @@ type NavItem = {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  color: string;
 };
 
 const navItems: NavItem[] = [
-  { href: '/', label: 'Αρχική', icon: Grid2X2 },
-  { href: '/questions', label: 'Ερωτήσεις', icon: BookOpen },
-  { href: '/start', label: 'Τεστ', icon: ClipboardList },
-  { href: '/ranking', label: 'Κατάταξη', icon: Trophy },
-  { href: '/profile', label: 'Προφίλ', icon: User },
+  { href: '/', label: 'Αρχική', icon: Grid2X2, color: 'text-cyan-400' },
+  { href: '/questions', label: 'Ερωτήσεις', icon: BookOpen, color: 'text-blue-400' },
+  { href: '/start', label: 'Τεστ', icon: ClipboardList, color: 'text-emerald-400' },
+  { href: '/ranking', label: 'Κατάταξη', icon: Trophy, color: 'text-amber-400' },
+  { href: '/profile', label: 'Προφίλ', icon: User, color: 'text-violet-400' },
 ];
 
 function NavLink({
@@ -43,19 +44,21 @@ function NavLink({
       <Link
         href={href}
         className={cn(
-          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+          'flex items-center gap-4 rounded-2xl border-2 px-4 py-3 transition-colors',
           active
-            ? 'bg-primary/15 text-primary'
-            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+            ? 'border-primary/50 bg-primary/10'
+            : 'border-transparent hover:bg-accent'
         )}
       >
-        <Icon
+        <Icon className={cn('size-7 shrink-0', item.color)} />
+        <span
           className={cn(
-            'size-5 shrink-0',
-            active && 'drop-shadow-[0_0_6px_var(--color-primary)]'
+            'text-sm font-extrabold uppercase tracking-wide',
+            active ? 'text-primary' : 'text-foreground/90'
           )}
-        />
-        <span>{item.label}</span>
+        >
+          {item.label}
+        </span>
       </Link>
     );
   }
@@ -63,21 +66,23 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={cn(
-        'flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors',
-        active ? 'text-primary' : 'text-muted-foreground'
-      )}
+      className="flex flex-1 flex-col items-center gap-1 py-2"
     >
       <Icon
         className={cn(
-          'size-5',
-          active && 'drop-shadow-[0_0_6px_var(--color-primary)]'
+          'size-6 transition-transform',
+          item.color,
+          active && 'scale-110'
         )}
       />
-      <span>{item.label}</span>
-      {active && (
-        <span className="size-1 rounded-full bg-primary" aria-hidden />
-      )}
+      <span
+        className={cn(
+          'text-[10px] font-bold uppercase tracking-wide',
+          active ? 'text-foreground' : 'text-muted-foreground'
+        )}
+      >
+        {item.label}
+      </span>
     </Link>
   );
 }
@@ -110,8 +115,8 @@ export function BottomNav() {
         ))}
       </div>
 
-      <div className="hidden h-full flex-col px-4 py-6 lg:flex">
-        <div className="mb-8 px-2">
+      <div className="hidden h-full flex-col px-3 py-6 lg:flex">
+        <div className="mb-8 px-3">
           <Image
             src="/logo-1.png"
             alt="Ταμπουρεάς Σχολή Οδηγών"
@@ -121,7 +126,7 @@ export function BottomNav() {
           />
         </div>
 
-        <div className="flex flex-1 flex-col gap-1">
+        <div className="flex flex-1 flex-col gap-2">
           {navItems.map((item) => (
             <NavLink
               key={item.href}

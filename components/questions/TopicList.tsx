@@ -36,10 +36,8 @@ export function TopicList({ topics, kcod }: TopicListProps) {
           )}
         >
           <div className="min-w-0 flex-1">
-            <p className="font-bold uppercase tracking-wide">{topic.theme}</p>
-            <p className="text-sm text-muted-foreground">
-              {topic.questionCount} ερωτήσεις
-            </p>
+            <p className="card-title">{topic.theme}</p>
+            <p className="card-subtitle">{topic.questionCount} ερωτήσεις</p>
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">
