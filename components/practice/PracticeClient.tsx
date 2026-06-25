@@ -9,9 +9,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { PracticeBatch } from '@/actions/practice';
 import { getPracticeQuestions } from '@/actions/practice';
-import { recordAnswerStreakStep, saveExamResult } from '@/actions/user-data';
+import {
+  getAnswerStreakStatus,
+  recordAnswerStreakStep,
+  saveExamResult,
+} from '@/actions/user-data';
 import { ExamActionBar } from '@/components/exam/ExamActionBar';
 import { ExamHeader } from '@/components/exam/ExamHeader';
+import { AnswerStreakBadge } from '@/components/home/AnswerStreakBadge';
 import { QuestionCard } from '@/components/ui/QuestionCard';
 import { QuestionNumberStrip } from '@/components/ui/QuestionNumberStrip';
 import { invalidateUserData } from '@/lib/invalidate-user-data';
@@ -39,6 +44,8 @@ type PracticeSummary = {
   total: number;
   wrong: number;
   title: string;
+  answerStreak: number;
+  sessionBestStreak: number;
 };
 
 const questionTransition = {
@@ -47,6 +54,27 @@ const questionTransition = {
   exit: { opacity: 0, x: -24 },
   transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const },
 };
+
+function computeSessionBestStreak(
+  progress: Map<number, QuestionProgress>
+): number {
+  let running = 0;
+  let best = 0;
+
+  for (const index of [...progress.keys()].sort((a, b) => a - b)) {
+    const item = progress.get(index);
+    if (!item) continue;
+
+    if (item.isCorrect) {
+      running += 1;
+      best = Math.max(best, running);
+    } else {
+      running = 0;
+    }
+  }
+
+  return best;
+}
 
 export function PracticeClient({
   category,
@@ -72,6 +100,8 @@ export function PracticeClient({
   const [progressByIndex, setProgressByIndex] = useState<
     Map<number, QuestionProgress>
   >(new Map());
+  const [answerStreak, setAnswerStreak] = useState(0);
+  const [sessionBestStreak, setSessionBestStreak] = useState(0);
 
   const categoryLabel = CATEGORY_LABELS[category.kcod] ?? category.klect;
   const sessionTitle =
@@ -192,11 +222,19 @@ export function PracticeClient({
 
       invalidateUserData(queryClient);
 
+      const streakStatus = await getAnswerStreakStatus();
+      const bestInSession = Math.max(
+        sessionBestStreak,
+        computeSessionBestStreak(progress)
+      );
+
       setSummary({
         score,
         total: records.length,
         wrong,
         title: sessionTitle,
+        answerStreak: streakStatus?.currentStreak ?? answerStreak,
+        sessionBestStreak: bestInSession,
       });
     } catch {
       toast.error('Σφάλμα αποθήκευσης αποτελεσμάτων');
@@ -230,9 +268,15 @@ export function PracticeClient({
 
       recordAnswerStreakStep(isCorrect)
         .then((result) => {
+          if (result) {
+            setAnswerStreak(result.currentStreak);
+            setSessionBestStreak((best) =>
+              Math.max(best, result.currentStreak)
+            );
+            invalidateUserData(queryClient);
+          }
           if (result?.message) {
             toast.success(result.message, { duration: 5000 });
-            invalidateUserData(queryClient);
           }
         })
         .catch(() => {});
@@ -341,6 +385,20 @@ export function PracticeClient({
           <p className="mt-2 text-sm text-muted-foreground">
             {percentage}% επιτυχία · {summary.wrong} λάθη
           </p>
+
+          {(summary.answerStreak > 0 || summary.sessionBestStreak > 0) && (
+            <div className="mt-5 flex flex-col items-center gap-2">
+              {summary.answerStreak > 0 ? (
+                <AnswerStreakBadge count={summary.answerStreak} />
+              ) : (
+                <p className="text-sm font-semibold text-violet-400">
+                  Καλύτερο σερί στη συνεδρία: {summary.sessionBestStreak}{' '}
+                  σωστές
+                </p>
+              )}
+            </div>
+          )}
+
           <p className="mt-4 text-xs text-success">
             Τα αποτελέσματα αποθηκεύτηκαν στο προφίλ σου
           </p>
@@ -399,6 +457,10 @@ export function PracticeClient({
                 : 'Ελεύθερη Εξάσκηση'}
         </p>
       </div>
+
+      {answerStreak > 0 && (
+        <AnswerStreakBadge count={answerStreak} size="sm" className="w-full" />
+      )}
 
       <ExamHeader
         current={currentIndex + 1}

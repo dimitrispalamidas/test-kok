@@ -9,6 +9,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useEffect, useState } from 'react';
 import { getCategories } from '@/actions/categories';
 import {
+  getAnswerStreakStatus,
   getDailyStreakStatus,
   getExamHistory,
   getSavedWrongCountsByCategory,
@@ -42,6 +43,11 @@ function PrefetchAppData() {
     void queryClient.prefetchQuery({
       queryKey: queryKeys.dailyStreak(),
       queryFn: getDailyStreakStatus,
+      staleTime: USER_DATA_STALE_TIME,
+    });
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.answerStreak(),
+      queryFn: getAnswerStreakStatus,
       staleTime: USER_DATA_STALE_TIME,
     });
     void queryClient.prefetchQuery({

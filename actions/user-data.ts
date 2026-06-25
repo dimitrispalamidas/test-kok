@@ -2,6 +2,8 @@
 
 import {
   processAnswerStreakBatch,
+  buildAnswerStreakStatus,
+  type AnswerStreakStatus,
 } from '@/lib/answer-streak';
 import {
   buildDailyStreakStatus,
@@ -259,6 +261,26 @@ export async function getDailyStreakStatus(): Promise<DailyStreakStatus | null> 
     longestStreak: profile.longest_daily_streak,
     lastActiveDate: profile.last_active_date,
   });
+}
+
+export async function getAnswerStreakStatus(): Promise<AnswerStreakStatus | null> {
+  const user = await getAuthUser();
+  if (!user) return null;
+
+  const supabase = await createClient();
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_answer_streak, best_answer_streak')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!profile) return null;
+
+  return buildAnswerStreakStatus(
+    profile.current_answer_streak,
+    profile.best_answer_streak
+  );
 }
 
 export async function getExamHistory(limit = 20) {

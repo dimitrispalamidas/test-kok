@@ -8,6 +8,7 @@ export function invalidateUserData(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.examHistory(50) });
   queryClient.invalidateQueries({ queryKey: queryKeys.savedWrongCounts() });
   queryClient.invalidateQueries({ queryKey: queryKeys.dailyStreak() });
+  queryClient.invalidateQueries({ queryKey: queryKeys.answerStreak() });
   queryClient.invalidateQueries({ queryKey: queryKeys.profile() });
   queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
 }

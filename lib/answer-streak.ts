@@ -45,6 +45,38 @@ export function buildAnswerStreakMessage(
   return `🎯 ${streakCount} συνεχόμενες σωστές! +${xpBonus} XP — συνέχισε!`;
 }
 
+export type AnswerStreakStatus = {
+  currentStreak: number;
+  bestStreak: number;
+  toNextBonus: number;
+  subtitle: string | null;
+};
+
+export function buildAnswerStreakStatus(
+  currentStreak: number,
+  bestStreak: number
+): AnswerStreakStatus {
+  if (currentStreak <= 0) {
+    return {
+      currentStreak: 0,
+      bestStreak,
+      toNextBonus: ANSWER_STREAK_MILESTONE,
+      subtitle: null,
+    };
+  }
+
+  const remainder = currentStreak % ANSWER_STREAK_MILESTONE;
+  const toNextBonus =
+    remainder === 0 ? ANSWER_STREAK_MILESTONE : ANSWER_STREAK_MILESTONE - remainder;
+
+  return {
+    currentStreak,
+    bestStreak,
+    toNextBonus,
+    subtitle: `${toNextBonus} ακόμα για +${ANSWER_STREAK_XP_BONUS} XP`,
+  };
+}
+
 export function processAnswerStreakBatch(
   currentStreak: number,
   answers: boolean[]

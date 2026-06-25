@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { createSerializer, parseAsInteger } from 'nuqs';
 import { CategorySelector } from '@/components/home/CategorySelector';
 import { DailyStreakBanner } from '@/components/home/DailyStreakBanner';
+import { AnswerStreakBanner } from '@/components/home/AnswerStreakBanner';
 import { RecentResults } from '@/components/home/RecentResults';
 import { StatsGrid } from '@/components/home/StatsGrid';
 import { PageSkeleton, StatsGridSkeleton } from '@/components/ui/PageSkeleton';
 import { useCategory } from '@/hooks/use-category';
 import { useCategoryStats } from '@/hooks/use-category-stats';
 import {
+  useAnswerStreakStatus,
   useCategories,
   useDailyStreakStatus,
   useExamHistory,
@@ -25,6 +27,7 @@ export function Dashboard() {
   const { data: history = [], isLoading: historyLoading } = useExamHistory(50);
   const { data: countsByCategory = {} } = useSavedWrongCountsByCategory();
   const { data: streakStatus } = useDailyStreakStatus();
+  const { data: answerStreakStatus } = useAnswerStreakStatus();
 
   const { kcod } = useCategory();
   const { history: filteredHistory, stats } = useCategoryStats(
@@ -49,6 +52,10 @@ export function Dashboard() {
       <CategorySelector categories={categories} />
 
       {streakStatus && <DailyStreakBanner status={streakStatus} />}
+
+      {answerStreakStatus && (
+        <AnswerStreakBanner status={answerStreakStatus} />
+      )}
 
       <Link
         href={categorySerializer('/start', { k: kcod })}
