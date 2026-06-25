@@ -25,18 +25,18 @@ export default async function AuthPage() {
         style={{ background: 'radial-gradient(circle, oklch(0.78 0.14 180) 0%, transparent 70%)' }}
       />
 
-      <header className="relative z-10 flex items-center justify-center px-6 py-8">
-        <Image
-          src="/logo-1.png"
-          alt="Ταμπουρεάς Σχολή Οδηγών"
-          width={210}
-          height={54}
-          className="h-12 w-auto"
-          priority
-        />
-      </header>
-
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+        <div className="mb-8">
+          <Image
+            src="/logo-1.png"
+            alt="Ταμπουρεάς Σχολή Οδηγών"
+            width={180}
+            height={46}
+            className="h-12 w-auto"
+            priority
+          />
+        </div>
+
         <h1 className="max-w-xl text-4xl font-extrabold leading-tight tracking-tight lg:text-5xl xl:text-6xl">
           Πέρνα την εξέταση{' '}
           <span className="text-primary">ΚΟΚ</span>{' '}
