@@ -103,6 +103,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      profiles: {
+        Row: {
+          user_id: string;
+          username: string;
+          created_at: string;
+          last_active_date: string | null;
+          current_daily_streak: number;
+          longest_daily_streak: number;
+          total_streak_xp: number;
+          current_answer_streak: number;
+          best_answer_streak: number;
+          total_answer_streak_xp: number;
+        };
+        Insert: {
+          user_id: string;
+          username: string;
+          created_at?: string;
+          last_active_date?: string | null;
+          current_daily_streak?: number;
+          longest_daily_streak?: number;
+          total_streak_xp?: number;
+          current_answer_streak?: number;
+          best_answer_streak?: number;
+          total_answer_streak_xp?: number;
+        };
+        Update: {
+          user_id?: string;
+          username?: string;
+          created_at?: string;
+          last_active_date?: string | null;
+          current_daily_streak?: number;
+          longest_daily_streak?: number;
+          total_streak_xp?: number;
+          current_answer_streak?: number;
+          best_answer_streak?: number;
+          total_answer_streak_xp?: number;
+        };
+        Relationships: [];
+      };
       kateg: {
         Row: {
           kcod: number;
@@ -209,6 +248,19 @@ export type Database = {
         Args: { p_user_id: string; p_qcod: number; p_selected_aaa?: number | null };
         Returns: undefined;
       };
+      get_leaderboard: {
+        Args: { p_kcod: number };
+        Returns: {
+          user_id: string;
+          username: string;
+          total_xp: number;
+          total_tests: number;
+          passed_tests: number;
+          best_streak: number;
+          daily_streak: number;
+          rank: number;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -224,6 +276,18 @@ export type UserExamResult = Database['public']['Tables']['user_exam_results']['
 export type UserExamAnswer = Database['public']['Tables']['user_exam_answers']['Row'];
 export type UserWrongQuestion = Database['public']['Tables']['user_wrong_questions']['Row'];
 export type UserSavedQuestion = Database['public']['Tables']['user_saved_questions']['Row'];
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+
+export type LeaderboardEntry = {
+  user_id: string;
+  username: string;
+  total_xp: number;
+  total_tests: number;
+  passed_tests: number;
+  best_streak: number;
+  daily_streak: number;
+  rank: number;
+};
 
 // A question with its answers bundled
 export type QuestWithAnswers = Quest & {

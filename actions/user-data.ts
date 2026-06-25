@@ -1,7 +1,25 @@
 'use server';
 
+import {
+  processAnswerStreakBatch,
+} from '@/lib/answer-streak';
+import {
+  buildDailyStreakStatus,
+  buildStreakToastMessage,
+  computeDailyStreakUpdate,
+  getDateInAthens,
+  type DailyStreakStatus,
+  type DailyStreakUpdate,
+} from '@/lib/daily-streak';
 import { createClient } from '@/lib/supabase/server';
 import type { ExamAnswerRecord } from '@/types/exam';
+import type { LeaderboardEntry } from '@/types/database';
+
+export type SaveExamResultResponse = {
+  resultId: string;
+  streak: DailyStreakUpdate | null;
+  answerStreakMessages: string[];
+};
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -44,7 +62,8 @@ export async function saveExamResult(params: {
   passed: boolean;
   durationSeconds: number | null;
   answers: ExamAnswerRecord[];
-}) {
+  answerStreakAlreadyRecorded?: boolean;
+}): Promise<SaveExamResultResponse | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -86,7 +105,162 @@ export async function saveExamResult(params: {
     }
   }
 
-  return result.id;
+  const streak = await updateDailyStreak(supabase, user.id);
+  const answerStreakMessages = params.answerStreakAlreadyRecorded
+    ? []
+    : await updateAnswerStreak(
+        supabase,
+        user.id,
+        params.answers.map((answer) => answer.isCorrect)
+      );
+
+  return {
+    resultId: result.id,
+    streak,
+    answerStreakMessages,
+  };
+}
+
+export async function recordAnswerStreakStep(
+  isCorrect: boolean
+): Promise<{ message: string | null; currentStreak: number } | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const messages = await updateAnswerStreak(supabase, user.id, [isCorrect]);
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_answer_streak')
+    .eq('user_id', user.id)
+    .single();
+
+  return {
+    message: messages[0] ?? null,
+    currentStreak: profile?.current_answer_streak ?? 0,
+  };
+}
+
+async function updateAnswerStreak(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  answers: boolean[]
+): Promise<string[]> {
+  if (answers.length === 0) return [];
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select(
+      'current_answer_streak, best_answer_streak, total_answer_streak_xp'
+    )
+    .eq('user_id', userId)
+    .single();
+
+  if (!profile) return [];
+
+  const batch = processAnswerStreakBatch(
+    profile.current_answer_streak,
+    answers
+  );
+
+  await supabase
+    .from('profiles')
+    .update({
+      current_answer_streak: batch.newStreak,
+      best_answer_streak: Math.max(
+        profile.best_answer_streak,
+        batch.bestStreakCandidate
+      ),
+      total_answer_streak_xp:
+        profile.total_answer_streak_xp + batch.totalXpBonus,
+    })
+    .eq('user_id', userId);
+
+  return batch.messages;
+}
+
+async function updateDailyStreak(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<DailyStreakUpdate | null> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select(
+      'last_active_date, current_daily_streak, longest_daily_streak, total_streak_xp'
+    )
+    .eq('user_id', userId)
+    .single();
+
+  if (!profile) return null;
+
+  const today = getDateInAthens();
+  const update = computeDailyStreakUpdate({
+    lastActiveDate: profile.last_active_date,
+    currentStreak: profile.current_daily_streak,
+    today,
+  });
+
+  if (profile.last_active_date === today) {
+    return null;
+  }
+
+  const longestDailyStreak = Math.max(
+    profile.longest_daily_streak,
+    update.newStreak
+  );
+
+  await supabase
+    .from('profiles')
+    .update({
+      last_active_date: today,
+      current_daily_streak: update.newStreak,
+      longest_daily_streak: longestDailyStreak,
+      total_streak_xp: profile.total_streak_xp + update.xpBonus,
+    })
+    .eq('user_id', userId);
+
+  const message = buildStreakToastMessage({
+    currentStreak: update.newStreak,
+    xpBonus: update.xpBonus,
+    extended: update.extended,
+    isFirstDay: update.isFirstDay,
+  });
+
+  if (!message) return null;
+
+  return {
+    currentStreak: update.newStreak,
+    xpBonus: update.xpBonus,
+    extended: update.extended,
+    isFirstDay: update.isFirstDay,
+    message,
+  };
+}
+
+export async function getDailyStreakStatus(): Promise<DailyStreakStatus | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select(
+      'last_active_date, current_daily_streak, longest_daily_streak'
+    )
+    .eq('user_id', user.id)
+    .single();
+
+  if (!profile) return null;
+
+  return buildDailyStreakStatus({
+    currentStreak: profile.current_daily_streak,
+    longestStreak: profile.longest_daily_streak,
+    lastActiveDate: profile.last_active_date,
+  });
 }
 
 export async function getExamHistory(limit = 20) {
@@ -290,4 +464,83 @@ export async function getWrongQuestionIds(): Promise<number[]> {
     .order('wrong_count', { ascending: false });
 
   return (data ?? []).map((r) => r.qcod);
+}
+
+// ─── Profile ──────────────────────────────────────────────────────────────────
+
+export async function getProfile() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('user_id, username, created_at')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!data) return null;
+
+  const emailPrefix = user.email
+    ? user.email.split('@')[0]?.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20) ?? ''
+    : '';
+
+  return {
+    ...data,
+    email: user.email ?? '',
+    isDefaultUsername:
+      emailPrefix.length >= 2 && data.username === emailPrefix,
+  };
+}
+
+export async function updateUsername(username: string) {
+  const trimmed = username.trim();
+  if (trimmed.length < 2 || trimmed.length > 20) {
+    throw new Error('Το όνομα πρέπει να έχει 2–20 χαρακτήρες');
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+    throw new Error('Μόνο γράμματα, αριθμοί και _ επιτρέπονται');
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ username: trimmed })
+    .eq('user_id', user.id);
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('Αυτό το όνομα χρησιμοποιείται ήδη');
+    }
+    throw new Error(error.message);
+  }
+}
+
+// ─── Leaderboard ──────────────────────────────────────────────────────────────
+
+export async function getLeaderboard(kcod: number): Promise<LeaderboardEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('get_leaderboard', {
+    p_kcod: kcod,
+  });
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((entry) => ({
+    user_id: entry.user_id,
+    username: entry.username,
+    total_xp: Number(entry.total_xp),
+    total_tests: Number(entry.total_tests),
+    passed_tests: Number(entry.passed_tests),
+    best_streak: Number(entry.best_streak),
+    daily_streak: Number(entry.daily_streak),
+    rank: Number(entry.rank),
+  }));
 }

@@ -78,7 +78,16 @@ export function ExamClient({ category, questions }: ExamClientProps) {
       passed,
       durationSeconds,
       answers: records,
-    }).catch(() => {});
+    })
+      .then((response) => {
+        if (response?.streak?.message) {
+          toast.success(response.streak.message, { duration: 5000 });
+        }
+        for (const message of response?.answerStreakMessages ?? []) {
+          toast.success(message, { duration: 5000 });
+        }
+      })
+      .catch(() => {});
 
     const result: StoredExamResult = {
       kcod: category.kcod,

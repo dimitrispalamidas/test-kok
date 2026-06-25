@@ -8,7 +8,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { PracticeBatch } from '@/actions/practice';
 import { getPracticeQuestions } from '@/actions/practice';
-import { saveExamResult } from '@/actions/user-data';
+import { recordAnswerStreakStep, saveExamResult } from '@/actions/user-data';
 import { ExamActionBar } from '@/components/exam/ExamActionBar';
 import { ExamHeader } from '@/components/exam/ExamHeader';
 import { QuestionCard } from '@/components/ui/QuestionCard';
@@ -172,7 +172,7 @@ export function PracticeClient({
 
     setIsSubmitting(true);
     try {
-      await saveExamResult({
+      const response = await saveExamResult({
         kcod: category.kcod,
         title: sessionTitle,
         score,
@@ -180,7 +180,12 @@ export function PracticeClient({
         passed,
         durationSeconds: null,
         answers: records,
+        answerStreakAlreadyRecorded: true,
       });
+
+      if (response?.streak?.message) {
+        toast.success(response.streak.message, { duration: 5000 });
+      }
 
       setSummary({
         score,
@@ -217,6 +222,15 @@ export function PracticeClient({
 
       setProgressByIndex(nextProgress);
       setRevealed(true);
+
+      recordAnswerStreakStep(isCorrect)
+        .then((result) => {
+          if (result?.message) {
+            toast.success(result.message, { duration: 5000 });
+          }
+        })
+        .catch(() => {});
+
       return;
     }
 

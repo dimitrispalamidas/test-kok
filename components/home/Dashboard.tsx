@@ -6,10 +6,12 @@ import { createSerializer, parseAsInteger } from 'nuqs';
 import type { getExamHistory } from '@/actions/user-data';
 import type { CategoryWithStats } from '@/actions/categories';
 import { CategorySelector } from '@/components/home/CategorySelector';
+import { DailyStreakBanner } from '@/components/home/DailyStreakBanner';
 import { RecentResults } from '@/components/home/RecentResults';
 import { StatsGrid } from '@/components/home/StatsGrid';
 import { useCategory } from '@/hooks/use-category';
 import { useCategoryStats } from '@/hooks/use-category-stats';
+import type { DailyStreakStatus } from '@/lib/daily-streak';
 import type { CategoryCounts } from '@/lib/category-stats';
 
 const categorySerializer = createSerializer({ k: parseAsInteger });
@@ -18,12 +20,14 @@ type DashboardProps = {
   categories: CategoryWithStats[];
   history: Awaited<ReturnType<typeof getExamHistory>>;
   countsByCategory: CategoryCounts;
+  streakStatus: DailyStreakStatus | null;
 };
 
 export function Dashboard({
   categories,
   history,
   countsByCategory,
+  streakStatus,
 }: DashboardProps) {
   const { kcod } = useCategory();
   const { history: filteredHistory, stats } = useCategoryStats(
@@ -43,6 +47,8 @@ export function Dashboard({
       </header>
 
       <CategorySelector categories={categories} />
+
+      {streakStatus && <DailyStreakBanner status={streakStatus} />}
 
       {/* CTA */}
       <Link

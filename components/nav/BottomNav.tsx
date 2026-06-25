@@ -15,14 +15,51 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
+  activeBg: string;
+  activeGlow: string;
 };
 
 const navItems: NavItem[] = [
-  { href: '/', label: 'Αρχική', icon: Grid2X2, color: 'text-cyan-400' },
-  { href: '/questions', label: 'Ερωτήσεις', icon: BookOpen, color: 'text-blue-400' },
-  { href: '/start', label: 'Τεστ', icon: ClipboardList, color: 'text-emerald-400' },
-  { href: '/ranking', label: 'Κατάταξη', icon: Trophy, color: 'text-amber-400' },
-  { href: '/profile', label: 'Προφίλ', icon: User, color: 'text-violet-400' },
+  {
+    href: '/',
+    label: 'Αρχική',
+    icon: Grid2X2,
+    color: 'text-cyan-400',
+    activeBg: 'bg-cyan-400/20',
+    activeGlow: 'drop-shadow-[0_0_10px_rgba(34,211,238,0.65)]',
+  },
+  {
+    href: '/questions',
+    label: 'Ερωτήσεις',
+    icon: BookOpen,
+    color: 'text-blue-400',
+    activeBg: 'bg-blue-400/20',
+    activeGlow: 'drop-shadow-[0_0_10px_rgba(96,165,250,0.65)]',
+  },
+  {
+    href: '/start',
+    label: 'Τεστ',
+    icon: ClipboardList,
+    color: 'text-emerald-400',
+    activeBg: 'bg-emerald-400/20',
+    activeGlow: 'drop-shadow-[0_0_10px_rgba(52,211,153,0.65)]',
+  },
+  {
+    href: '/ranking',
+    label: 'Κατάταξη',
+    icon: Trophy,
+    color: 'text-amber-400',
+    activeBg: 'bg-amber-400/20',
+    activeGlow: 'drop-shadow-[0_0_10px_rgba(251,191,36,0.65)]',
+  },
+  {
+    href: '/profile',
+    label: 'Προφίλ',
+    icon: User,
+    color: 'text-violet-400',
+    activeBg: 'bg-violet-400/20',
+    activeGlow: 'drop-shadow-[0_0_10px_rgba(167,139,250,0.65)]',
+  },
 ];
 
 function NavLink({
@@ -66,19 +103,28 @@ function NavLink({
   return (
     <Link
       href={href}
-      className="flex flex-1 flex-col items-center gap-1 py-2"
+      className="flex flex-1 flex-col items-center gap-0.5 py-1.5"
     >
-      <Icon
-        className={cn(
-          'size-6 transition-transform',
-          item.color,
-          active && 'scale-110'
-        )}
-      />
       <span
         className={cn(
-          'text-[10px] font-bold uppercase tracking-wide',
-          active ? 'text-foreground' : 'text-muted-foreground'
+          'flex items-center justify-center rounded-2xl px-3 py-1.5 transition-all duration-200',
+          active ? item.activeBg : 'bg-transparent'
+        )}
+      >
+        <Icon
+          className={cn(
+            'transition-all duration-200',
+            item.color,
+            active
+              ? cn('size-7 scale-110', item.activeGlow)
+              : 'size-6 opacity-80'
+          )}
+        />
+      </span>
+      <span
+        className={cn(
+          'text-[10px] font-bold uppercase tracking-wide transition-all duration-200',
+          active ? item.color : 'text-muted-foreground'
         )}
       >
         {item.label}

@@ -21,8 +21,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { getExamHistory } from '@/actions/user-data';
-import { signOut } from '@/actions/user-data';
+import type { getExamHistory, getProfile } from '@/actions/user-data';
+import { signOut, updateUsername } from '@/actions/user-data';
 import { CategorySelector } from '@/components/home/CategorySelector';
 import type { CategoryWithStats } from '@/actions/categories';
 import { useCategoryStats } from '@/hooks/use-category-stats';
@@ -32,10 +32,12 @@ import { cn } from '@/lib/utils';
 
 type ProfileUser = { email: string; id: string };
 type HistoryEntry = Awaited<ReturnType<typeof getExamHistory>>[number];
+type ProfileData = NonNullable<Awaited<ReturnType<typeof getProfile>>>;
 
 type ProfileClientProps = {
   categories: CategoryWithStats[];
   user: ProfileUser | null;
+  profile: ProfileData | null;
   history: HistoryEntry[];
   countsByCategory: CategoryCounts;
 };
@@ -126,12 +128,18 @@ function formatDate(iso: string) {
 export function ProfileClient({
   categories,
   user,
+  profile,
   history,
   countsByCategory,
 }: ProfileClientProps) {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [usernameInput, setUsernameInput] = useState(profile?.username ?? '');
+  const [savingUsername, setSavingUsername] = useState(false);
+  const [showUsernameForm, setShowUsernameForm] = useState(
+    profile?.isDefaultUsername ?? false
+  );
   const { history: filteredHistory, stats } = useCategoryStats(
     history,
     countsByCategory
@@ -159,6 +167,20 @@ export function ProfileClient({
     setExpandedId((current) => (current === id ? null : id));
   };
 
+  const handleSaveUsername = async () => {
+    setSavingUsername(true);
+    try {
+      await updateUsername(usernameInput);
+      toast.success('Το όνομα ενημερώθηκε');
+      setShowUsernameForm(false);
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Σφάλμα αποθήκευσης');
+    } finally {
+      setSavingUsername(false);
+    }
+  };
+
   return (
     <div className="page-container space-y-6">
       <header className="space-y-1">
@@ -176,8 +198,10 @@ export function ProfileClient({
               <User className="size-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="card-title truncate">{user.email}</p>
-              <p className="card-subtitle">Συνδεδεμένος</p>
+              <p className="card-title truncate">
+                {profile?.username ?? user.email}
+              </p>
+              <p className="card-subtitle truncate">{user.email}</p>
             </div>
             <button
               type="button"
@@ -193,6 +217,49 @@ export function ProfileClient({
               Αποσύνδεση
             </button>
           </div>
+
+          {(showUsernameForm || profile) && (
+            <div className="mt-4 space-y-3 border-t border-border/40 pt-4">
+              {showUsernameForm && (
+                <p className="text-sm text-muted-foreground">
+                  Όρισε ένα nickname για να εμφανίζεσαι στην κατάταξη.
+                </p>
+              )}
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="text"
+                  value={usernameInput}
+                  onChange={(event) => setUsernameInput(event.target.value)}
+                  maxLength={20}
+                  placeholder="nickname"
+                  className={cn(
+                    'flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm',
+                    'outline-none focus:border-primary focus:ring-2 focus:ring-primary/20'
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveUsername}
+                  disabled={savingUsername || usernameInput.trim().length < 2}
+                  className={cn(
+                    'rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground',
+                    'transition-all hover:brightness-110 disabled:opacity-50'
+                  )}
+                >
+                  {savingUsername ? 'Αποθήκευση…' : 'Αποθήκευση'}
+                </button>
+              </div>
+              {!showUsernameForm && (
+                <button
+                  type="button"
+                  onClick={() => setShowUsernameForm(true)}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Αλλαγή nickname
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Stats grid */}
           <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border/40 pt-4">

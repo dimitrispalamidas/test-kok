@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { getExamHistory } from '@/actions/user-data';
 import type { CategoryWithStats } from '@/actions/categories';
 import { CategorySelector } from '@/components/home/CategorySelector';
+import { LeaderboardPanel } from '@/components/ranking/LeaderboardPanel';
 import { useCategoryStats } from '@/hooks/use-category-stats';
 import type { CategoryCounts } from '@/lib/category-stats';
 import { cn } from '@/lib/utils';
@@ -25,12 +26,14 @@ type RankingClientProps = {
   categories: CategoryWithStats[];
   history: Awaited<ReturnType<typeof getExamHistory>>;
   countsByCategory: CategoryCounts;
+  currentUserId: string | null;
 };
 
 export function RankingClient({
   categories,
   history,
   countsByCategory,
+  currentUserId,
 }: RankingClientProps) {
   const [tab, setTab] = useState<RankingTab>('charts');
   const { stats } = useCategoryStats(history, countsByCategory);
@@ -70,7 +73,7 @@ export function RankingClient({
         ))}
       </div>
 
-      {!hasData ? (
+      {!hasData && tab === 'charts' ? (
         <div className="flex flex-col items-center gap-4 py-24">
           <span className="flex size-20 items-center justify-center rounded-full bg-primary/10">
             <BarChart3 className="size-10 text-primary" />
@@ -110,10 +113,12 @@ export function RankingClient({
             iconColor="text-warning"
           />
         </div>
+      ) : tab === 'ranking' ? (
+        <LeaderboardPanel currentUserId={currentUserId} />
       ) : (
         <div className="flex flex-col items-center gap-4 py-24">
           <span className="flex size-20 items-center justify-center rounded-full bg-primary/10">
-            <Trophy className="size-10 text-primary" />
+            <Award className="size-10 text-primary" />
           </span>
           <p className="text-muted-foreground">Σύντομα διαθέσιμο</p>
         </div>
