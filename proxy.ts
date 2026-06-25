@@ -38,9 +38,9 @@ export async function proxy(request: NextRequest) {
   );
 
   if (!user && !isPublic) {
-    // Unauthenticated → redirect to login page
+    // Unauthenticated → landing page first, not login
     const url = request.nextUrl.clone();
-    url.pathname = '/auth/login';
+    url.pathname = '/auth';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
