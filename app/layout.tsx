@@ -54,9 +54,6 @@ export default function RootLayout({
         <link rel="preload" href="/logo-1.png" as="image" />
       </head>
       <body className={`${nunito.variable} min-h-screen font-sans antialiased`}>
-        <div id="app-splash" className="app-splash" aria-hidden="true">
-          <img src="/logo-1.png" alt="" width={280} height={72} decoding="sync" />
-        </div>
         <SplashDismiss />
         <ThemeProvider
           attribute="class"
