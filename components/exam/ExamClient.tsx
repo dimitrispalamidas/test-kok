@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -32,6 +33,7 @@ const questionTransition = {
 
 export function ExamClient({ category, questions }: ExamClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number | null>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -86,6 +88,7 @@ export function ExamClient({ category, questions }: ExamClientProps) {
         for (const message of response?.answerStreakMessages ?? []) {
           toast.success(message, { duration: 5000 });
         }
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
       })
       .catch(() => {});
 

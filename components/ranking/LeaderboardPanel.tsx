@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Flame, Loader2, Trophy, Zap } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Flame, Loader2, RefreshCw, Trophy, Zap } from 'lucide-react';
 import { getLeaderboard } from '@/actions/user-data';
 import { useCategory } from '@/hooks/use-category';
 import { XpGuide } from '@/components/ranking/XpGuide';
@@ -51,11 +51,18 @@ function StatPill({
 
 export function LeaderboardPanel({ currentUserId }: LeaderboardPanelProps) {
   const { kcod } = useCategory();
+  const queryClient = useQueryClient();
 
-  const { data: entries = [], isLoading, error } = useQuery({
+  const { data: entries = [], isLoading, error, isFetching } = useQuery({
     queryKey: ['leaderboard', kcod],
     queryFn: () => getLeaderboard(kcod),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['leaderboard', kcod] });
+  };
 
   const currentUser = currentUserId
     ? entries.find((entry) => entry.user_id === currentUserId)
@@ -81,6 +88,14 @@ export function LeaderboardPanel({ currentUserId }: LeaderboardPanelProps) {
         <XpGuide />
         <div className="flex flex-col items-center gap-4 py-16">
           <p className="card-subtitle">Σφάλμα φόρτωσης κατάταξης</p>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary"
+          >
+            <RefreshCw className="size-4" />
+            Ανανέωση
+          </button>
         </div>
       </div>
     );
@@ -95,8 +110,8 @@ export function LeaderboardPanel({ currentUserId }: LeaderboardPanelProps) {
             <Trophy className="size-10 text-primary" />
           </span>
           <p className="max-w-xs text-center card-subtitle">
-            Δεν υπάρχουν ακόμα αποτελέσματα για αυτή την κατηγορία. Κάνε ένα
-            τεστ για να μπεις στην κατάταξη!
+            Δεν υπάρχουν ακόμα αποτελέσματα για αυτή την κατηγορία. Ολοκλήρωσε
+            ένα τεστ για να μπεις στην κατάταξη!
           </p>
         </div>
       </div>
@@ -106,6 +121,19 @@ export function LeaderboardPanel({ currentUserId }: LeaderboardPanelProps) {
   return (
     <div className="space-y-6">
       <XpGuide />
+
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">Ανανεώνεται αυτόματα</p>
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={isFetching}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-muted/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-opacity disabled:opacity-50"
+        >
+          <RefreshCw className={cn('size-3.5', isFetching && 'animate-spin')} />
+          Ανανέωση
+        </button>
+      </div>
 
       {currentUser && (
         <section className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-5 shadow-sm shadow-primary/10">

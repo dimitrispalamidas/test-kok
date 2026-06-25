@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Home, RotateCcw, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -53,6 +54,7 @@ export function PracticeClient({
   mode = null,
 }: PracticeClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [questions, setQuestions] = useState<QuestWithAnswers[]>(
     initialBatch.questions
   );
@@ -186,6 +188,8 @@ export function PracticeClient({
       if (response?.streak?.message) {
         toast.success(response.streak.message, { duration: 5000 });
       }
+
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
 
       setSummary({
         score,
