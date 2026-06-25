@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Flame, Loader2, Trophy, Zap } from 'lucide-react';
 import { getLeaderboard } from '@/actions/user-data';
 import { useCategory } from '@/hooks/use-category';
-import { getXpRulesDescription } from '@/lib/xp-rewards';
+import { XpGuide } from '@/components/ranking/XpGuide';
 import { cn } from '@/lib/utils';
 
 type LeaderboardPanelProps = {
@@ -66,36 +66,47 @@ export function LeaderboardPanel({ currentUserId }: LeaderboardPanelProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="size-10 animate-spin text-primary" />
+      <div className="space-y-6">
+        <XpGuide />
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="size-10 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center gap-4 py-24">
-        <p className="card-subtitle">Σφάλμα φόρτωσης κατάταξης</p>
+      <div className="space-y-6">
+        <XpGuide />
+        <div className="flex flex-col items-center gap-4 py-16">
+          <p className="card-subtitle">Σφάλμα φόρτωσης κατάταξης</p>
+        </div>
       </div>
     );
   }
 
   if (entries.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-4 py-24">
-        <span className="flex size-20 items-center justify-center rounded-full bg-primary/10">
-          <Trophy className="size-10 text-primary" />
-        </span>
-        <p className="max-w-xs text-center card-subtitle">
-          Δεν υπάρχουν ακόμα αποτελέσματα για αυτή την κατηγορία. Κάνε ένα τεστ
-          για να μπεις στην κατάταξη!
-        </p>
+      <div className="space-y-6">
+        <XpGuide />
+        <div className="flex flex-col items-center gap-4 py-12">
+          <span className="flex size-20 items-center justify-center rounded-full bg-primary/10">
+            <Trophy className="size-10 text-primary" />
+          </span>
+          <p className="max-w-xs text-center card-subtitle">
+            Δεν υπάρχουν ακόμα αποτελέσματα για αυτή την κατηγορία. Κάνε ένα
+            τεστ για να μπεις στην κατάταξη!
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <XpGuide />
+
       {currentUser && (
         <section className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-5 shadow-sm shadow-primary/10">
           <p className="page-eyebrow">Η θέση σου</p>
@@ -134,10 +145,7 @@ export function LeaderboardPanel({ currentUserId }: LeaderboardPanelProps) {
       )}
 
       <section className="space-y-3">
-        <div className="space-y-1">
-          <h2 className="section-title">Κατάταξη XP</h2>
-          <p className="card-subtitle leading-relaxed">{getXpRulesDescription()}</p>
-        </div>
+        <h2 className="section-title">Κατάταξη</h2>
 
         {topThree.length > 0 && (
           <div className="grid gap-3">

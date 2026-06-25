@@ -191,6 +191,40 @@ h4 {
   }
 }
 
+/* App launch splash — visible before React hydrates */
+.app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1c2830;
+  transition: opacity 350ms ease;
+}
+
+.app-splash img {
+  width: min(280px, 78vw);
+  height: auto;
+  animation: splash-logo-in 500ms ease-out both;
+}
+
+.app-splash--hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes splash-logo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Glow effect for FAB */
 .fab-glow {
   box-shadow:

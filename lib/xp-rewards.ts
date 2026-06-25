@@ -5,11 +5,36 @@ export const XP_DAILY_STREAK = 10;
 export const XP_ANSWER_STREAK_MILESTONE = 10;
 export const XP_ANSWER_STREAK_BONUS = 5;
 
-export function getXpRulesDescription(): string {
-  return [
-    `+${XP_PER_CORRECT_ANSWER} XP ανά σωστή απάντηση`,
-    `+${XP_PASS_TEST} XP αν πέρασες τεστ`,
-    `+${XP_DAILY_STREAK} XP αν συνεχίζεις ημερήσιο σερί με τεστ (2+ μέρες)`,
-    `+${XP_ANSWER_STREAK_BONUS} XP κάθε ${XP_ANSWER_STREAK_MILESTONE} σερί σωστών`,
-  ].join(' · ');
-}
+export type XpRule = {
+  id: 'correct' | 'pass' | 'daily' | 'answer-streak';
+  title: string;
+  description: string;
+  xpLabel: string;
+};
+
+export const XP_RULES: XpRule[] = [
+  {
+    id: 'correct',
+    title: 'Σωστές απαντήσεις',
+    description: 'Κάθε σωστή απάντηση σε τεστ ή εξάσκηση',
+    xpLabel: `+${XP_PER_CORRECT_ANSWER}`,
+  },
+  {
+    id: 'pass',
+    title: 'Επιτυχία τεστ',
+    description: 'Όταν περνάς ένα τεστ με επιτυχία',
+    xpLabel: `+${XP_PASS_TEST}`,
+  },
+  {
+    id: 'daily',
+    title: 'Ημερήσιο σερί',
+    description: 'Συνεχόμενες μέρες που ολοκληρώνεις τεστ (από 2η μέρα)',
+    xpLabel: `+${XP_DAILY_STREAK}`,
+  },
+  {
+    id: 'answer-streak',
+    title: 'Σερί σωστών',
+    description: `Κάθε ${XP_ANSWER_STREAK_MILESTONE} συνεχόμενες σωστές απαντήσεις`,
+    xpLabel: `+${XP_ANSWER_STREAK_BONUS}`,
+  },
+];
