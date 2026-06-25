@@ -56,8 +56,7 @@ export function LeaderboardPanel({ currentUserId }: LeaderboardPanelProps) {
   const { data: entries = [], isLoading, error, isFetching } = useQuery({
     queryKey: ['leaderboard', kcod],
     queryFn: () => getLeaderboard(kcod),
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 5 * 60 * 1000,
   });
 
   const handleRefresh = () => {

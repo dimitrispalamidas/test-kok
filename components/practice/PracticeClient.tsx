@@ -231,6 +231,7 @@ export function PracticeClient({
         .then((result) => {
           if (result?.message) {
             toast.success(result.message, { duration: 5000 });
+            queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
           }
         })
         .catch(() => {});
