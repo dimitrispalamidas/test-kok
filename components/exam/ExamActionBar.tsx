@@ -10,6 +10,7 @@ type ExamActionBarProps = {
   revealed?: boolean;
   isLast?: boolean;
   isSubmitting?: boolean;
+  lastConfirmLabel?: string;
 };
 
 export function ExamActionBar({
@@ -19,10 +20,11 @@ export function ExamActionBar({
   revealed = false,
   isLast = false,
   isSubmitting = false,
+  lastConfirmLabel,
 }: ExamActionBarProps) {
   const confirmLabel = revealed
     ? isLast
-      ? 'Ολοκλήρωση'
+      ? (lastConfirmLabel ?? 'Ολοκλήρωση')
       : 'Επόμενη'
     : 'Επιβεβαίωση';
 

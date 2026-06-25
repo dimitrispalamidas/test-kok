@@ -62,8 +62,8 @@ export function XpGuide() {
           <Zap className="size-5 fill-primary/20 text-primary" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="section-title">Πώς μαζεύεις XP</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <h2 className="card-title">Πώς μαζεύεις XP</h2>
+          <p className="card-subtitle">
             Κάνε τεστ, κράτα σερί και ανέβα στην κατάταξη
           </p>
         </div>

@@ -1,3 +1,5 @@
+import { isQuickTestResult, isSimulationExamResult } from '@/lib/exam-session';
+
 export type HistoryEntry = {
   id: string;
   kcod: number;
@@ -7,13 +9,15 @@ export type HistoryEntry = {
   passed: boolean;
   created_at: string;
   percentage: number;
+  duration_seconds: number | null;
 };
 
 export type CategoryStats = {
-  totalTests: number;
+  quickTests: number;
   totalCorrect: number;
   totalQuestions: number;
   completedExams: number;
+  simulationTests: number;
   bestStreak: number;
   currentStreak: number;
   savedCount: number;
@@ -26,10 +30,11 @@ export type CategoryCounts = Record<
 >;
 
 export const EMPTY_CATEGORY_STATS: CategoryStats = {
-  totalTests: 0,
+  quickTests: 0,
   totalCorrect: 0,
   totalQuestions: 0,
   completedExams: 0,
+  simulationTests: 0,
   bestStreak: 0,
   currentStreak: 0,
   savedCount: 0,
@@ -59,10 +64,11 @@ export function computeStatsFromHistory(
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   );
 
-  const totalTests = ordered.length;
+  const quickTests = ordered.filter(isQuickTestResult).length;
   const totalCorrect = ordered.reduce((sum, entry) => sum + entry.score, 0);
   const totalQuestions = ordered.reduce((sum, entry) => sum + entry.total, 0);
   const completedExams = ordered.filter((entry) => entry.passed).length;
+  const simulationTests = ordered.filter(isSimulationExamResult).length;
 
   let bestStreak = 0;
   let currentStreak = 0;
@@ -79,10 +85,11 @@ export function computeStatsFromHistory(
   currentStreak = runningStreak;
 
   return {
-    totalTests,
+    quickTests,
     totalCorrect,
     totalQuestions,
     completedExams,
+    simulationTests,
     bestStreak,
     currentStreak,
     savedCount: counts.savedCount,

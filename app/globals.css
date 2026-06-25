@@ -158,6 +158,23 @@ h4 {
   color: var(--muted-foreground);
 }
 
+/* Small uppercase label above a card-title (category selector, profile fields) */
+.card-field-label {
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+
+.card-item-title {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--foreground);
+}
+
 /* Main app pages — consistent top breathing room + safe area */
 .page-container {
   margin-inline: auto;

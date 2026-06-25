@@ -5,13 +5,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Home, RotateCcw, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { PracticeBatch } from '@/actions/practice';
-import { getPracticeQuestions } from '@/actions/practice';
+import { getPracticeQuestions, recordWeakPracticeStep } from '@/actions/practice';
 import {
   getAnswerStreakStatus,
   recordAnswerStreakStep,
+  recordPracticeStep,
   saveExamResult,
 } from '@/actions/user-data';
 import { ExamActionBar } from '@/components/exam/ExamActionBar';
@@ -20,6 +21,11 @@ import { AnswerStreakBadge } from '@/components/home/AnswerStreakBadge';
 import { QuestionCard } from '@/components/ui/QuestionCard';
 import { QuestionNumberStrip } from '@/components/ui/QuestionNumberStrip';
 import { invalidateUserData } from '@/lib/invalidate-user-data';
+import { playAnswerSound, playStreakSound, playTestResultSound } from '@/lib/sound-effects';
+import { useQuestionBookmarks } from '@/hooks/use-question-bookmarks';
+import { hrefWithCategory } from '@/lib/category-url';
+import { fireSuccessConfetti } from '@/lib/confetti';
+import { TEST_EXIT_CONFIRMATION } from '@/lib/exam-session';
 import { CATEGORY_LABELS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { Kateg, QuestWithAnswers } from '@/types/database';
@@ -39,14 +45,25 @@ type QuestionProgress = {
   isCorrect: boolean;
 };
 
-type PracticeSummary = {
-  score: number;
-  total: number;
-  wrong: number;
-  title: string;
-  answerStreak: number;
-  sessionBestStreak: number;
-};
+type PracticeSummary =
+  | {
+      type: 'session';
+      score: number;
+      total: number;
+      wrong: number;
+      title: string;
+      answerStreak: number;
+      sessionBestStreak: number;
+    }
+  | {
+      type: 'topic';
+      theme: string;
+      score: number;
+      total: number;
+      wrong: number;
+      answerStreak: number;
+      sessionBestStreak: number;
+    };
 
 const questionTransition = {
   initial: { opacity: 0, x: 24 },
@@ -55,17 +72,14 @@ const questionTransition = {
   transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const },
 };
 
-function computeSessionBestStreak(
-  progress: Map<number, QuestionProgress>
+function computeSessionBestStreakFromRecords(
+  records: ExamAnswerRecord[]
 ): number {
   let running = 0;
   let best = 0;
 
-  for (const index of [...progress.keys()].sort((a, b) => a - b)) {
-    const item = progress.get(index);
-    if (!item) continue;
-
-    if (item.isCorrect) {
+  for (const record of records) {
+    if (record.isCorrect) {
       running += 1;
       best = Math.max(best, running);
     } else {
@@ -74,6 +88,40 @@ function computeSessionBestStreak(
   }
 
   return best;
+}
+
+function rekeyProgressAfterRemoval(
+  oldQuestions: QuestWithAnswers[],
+  removedQcod: number,
+  progress: Map<number, QuestionProgress>
+): Map<number, QuestionProgress> {
+  const next = new Map<number, QuestionProgress>();
+  let newIdx = 0;
+
+  for (let i = 0; i < oldQuestions.length; i++) {
+    if (oldQuestions[i].qcod === removedQcod) continue;
+
+    const item = progress.get(i);
+    if (item) {
+      next.set(newIdx, item);
+    }
+    newIdx += 1;
+  }
+
+  return next;
+}
+
+function toAnswerRecord(
+  question: QuestWithAnswers,
+  selectedAaa: number,
+  isCorrect: boolean
+): ExamAnswerRecord {
+  return {
+    qcod: question.qcod,
+    selectedAaa,
+    correctAaa: question.answers.find((answer) => answer.acorr)?.aaa ?? 0,
+    isCorrect,
+  };
 }
 
 export function PracticeClient({
@@ -96,14 +144,17 @@ export function PracticeClient({
   const [loadingMore, setLoadingMore] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [summary, setSummary] = useState<PracticeSummary | null>(null);
-  const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
+  const confettiFiredRef = useRef(false);
+  const { bookmarks, toggleBookmark: saveBookmark } = useQuestionBookmarks();
   const [progressByIndex, setProgressByIndex] = useState<
     Map<number, QuestionProgress>
   >(new Map());
+  const [sessionRecords, setSessionRecords] = useState<ExamAnswerRecord[]>([]);
   const [answerStreak, setAnswerStreak] = useState(0);
   const [sessionBestStreak, setSessionBestStreak] = useState(0);
 
   const categoryLabel = CATEGORY_LABELS[category.kcod] ?? category.klect;
+  const isTopicMode = Boolean(theme) && mode == null;
   const sessionTitle =
     mode === 'quick'
       ? 'Γρήγορο Τεστ'
@@ -114,6 +165,13 @@ export function PracticeClient({
 
   const isLastQuestion =
     currentIndex >= total - 1 && currentIndex >= questions.length - 1 && !hasMore;
+
+  const allQuestionsAnswered =
+    isTopicMode &&
+    total > 0 &&
+    Array.from({ length: total }, (_, index) => index).every((index) =>
+      progressByIndex.has(index)
+    );
 
   const { answeredIndices, correctIndices, incorrectIndices } = useMemo(() => {
     const answered = new Set<number>();
@@ -190,16 +248,15 @@ export function PracticeClient({
     theme,
   ]);
 
-  const handleFinish = async (progress: Map<number, QuestionProgress>) => {
+  const handleFinish = async (records: ExamAnswerRecord[]) => {
     if (isSubmitting) return;
 
-    const records = buildAnswerRecords(progress);
     if (records.length === 0) {
       toast.warning('Απάντησε τουλάχιστον μία ερώτηση');
       return;
     }
 
-    const score = records.filter((r) => r.isCorrect).length;
+    const score = records.filter((record) => record.isCorrect).length;
     const wrong = records.length - score;
     const passed = score / records.length >= 0.7;
 
@@ -214,6 +271,7 @@ export function PracticeClient({
         durationSeconds: null,
         answers: records,
         answerStreakAlreadyRecorded: true,
+        skipWrongQuestionUpdates: mode === 'weak',
       });
 
       if (response?.streak?.message) {
@@ -225,10 +283,13 @@ export function PracticeClient({
       const streakStatus = await getAnswerStreakStatus();
       const bestInSession = Math.max(
         sessionBestStreak,
-        computeSessionBestStreak(progress)
+        computeSessionBestStreakFromRecords(records)
       );
 
+      playTestResultSound(passed);
+
       setSummary({
+        type: 'session',
         score,
         total: records.length,
         wrong,
@@ -242,6 +303,42 @@ export function PracticeClient({
       setIsSubmitting(false);
     }
   };
+
+  const handleTopicComplete = () => {
+    const records = buildAnswerRecords(progressByIndex);
+    const score = records.filter((record) => record.isCorrect).length;
+    const wrong = records.length - score;
+    const bestInSession = Math.max(
+      sessionBestStreak,
+      computeSessionBestStreakFromRecords(records)
+    );
+
+    setSummary({
+      type: 'topic',
+      theme: theme ?? sessionTitle,
+      score,
+      total: records.length,
+      wrong,
+      answerStreak,
+      sessionBestStreak: bestInSession,
+    });
+  };
+
+  useEffect(() => {
+    if (!summary || summary.type !== 'session' || confettiFiredRef.current) {
+      return;
+    }
+
+    const passed =
+      summary.total > 0 && summary.score / summary.total >= 0.7;
+
+    if (!passed) {
+      return;
+    }
+
+    confettiFiredRef.current = true;
+    fireSuccessConfetti();
+  }, [summary]);
 
   const handleSelect = (aaa: number) => {
     if (revealed || !currentQuestion || summary) return;
@@ -257,6 +354,75 @@ export function PracticeClient({
       const isCorrect =
         currentQuestion.answers.find((a) => a.aaa === selectedAaa)?.acorr ??
         false;
+
+      playAnswerSound(isCorrect);
+
+      const answerRecord = toAnswerRecord(
+        currentQuestion,
+        selectedAaa,
+        isCorrect
+      );
+
+      if (mode === 'weak') {
+        const nextSessionRecords = [...sessionRecords, answerRecord];
+        setSessionRecords(nextSessionRecords);
+
+        try {
+          await recordWeakPracticeStep({
+            qcod: currentQuestion.qcod,
+            kcod: category.kcod,
+            selectedAaa,
+            isCorrect,
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['wrong-questions', category.kcod],
+          });
+          invalidateUserData(queryClient);
+        } catch {
+          toast.error('Σφάλμα αποθήκευσης απάντησης');
+          return;
+        }
+
+        recordAnswerStreakStep(isCorrect)
+          .then((result) => {
+            if (result) {
+              setAnswerStreak(result.currentStreak);
+              setSessionBestStreak((best) =>
+                Math.max(best, result.currentStreak)
+              );
+              invalidateUserData(queryClient);
+            }
+            if (result?.message) {
+              playStreakSound();
+              toast.success(result.message, { duration: 5000 });
+            }
+          })
+          .catch(() => {});
+
+        const nextProgress = new Map(progressByIndex).set(currentIndex, {
+          selectedAaa,
+          isCorrect,
+        });
+        setProgressByIndex(nextProgress);
+        setRevealed(true);
+        return;
+      }
+
+      try {
+        const practiceResult = await recordPracticeStep({
+          qcod: currentQuestion.qcod,
+          kcod: category.kcod,
+          selectedAaa,
+          isCorrect,
+        });
+        invalidateUserData(queryClient);
+        if (practiceResult?.streakMessage) {
+          toast.success(practiceResult.streakMessage, { duration: 5000 });
+        }
+      } catch {
+        toast.error('Σφάλμα αποθήκευσης απάντησης');
+        return;
+      }
 
       const nextProgress = new Map(progressByIndex).set(currentIndex, {
         selectedAaa,
@@ -276,6 +442,7 @@ export function PracticeClient({
             invalidateUserData(queryClient);
           }
           if (result?.message) {
+            playStreakSound();
             toast.success(result.message, { duration: 5000 });
           }
         })
@@ -285,7 +452,45 @@ export function PracticeClient({
     }
 
     if (isLastQuestion) {
-      await handleFinish(progressByIndex);
+      if (isTopicMode) {
+        if (allQuestionsAnswered) {
+          handleTopicComplete();
+        }
+        return;
+      }
+
+      const records =
+        mode === 'weak' ? sessionRecords : buildAnswerRecords(progressByIndex);
+      await handleFinish(records);
+      return;
+    }
+
+    const currentProgress = progressByIndex.get(currentIndex);
+
+    if (mode === 'weak' && currentProgress?.isCorrect) {
+      const remainingQuestions = questions.filter(
+        (question) => question.qcod !== currentQuestion.qcod
+      );
+
+      if (remainingQuestions.length === 0) {
+        await handleFinish(sessionRecords);
+        return;
+      }
+
+      setQuestions(remainingQuestions);
+      setTotal(remainingQuestions.length);
+      setProgressByIndex(
+        rekeyProgressAfterRemoval(
+          questions,
+          currentQuestion.qcod,
+          progressByIndex
+        )
+      );
+      setCurrentIndex((index) =>
+        Math.min(index, Math.max(0, remainingQuestions.length - 1))
+      );
+      setSelectedAaa(null);
+      setRevealed(false);
       return;
     }
 
@@ -338,18 +543,71 @@ export function PracticeClient({
 
   const toggleBookmark = () => {
     if (!currentQuestion || summary) return;
-    setBookmarks((prev) => {
-      const next = new Set(prev);
-      if (next.has(currentQuestion.qcod)) {
-        next.delete(currentQuestion.qcod);
-      } else {
-        next.add(currentQuestion.qcod);
-      }
-      return next;
-    });
+    void saveBookmark(currentQuestion.qcod);
   };
 
   if (summary) {
+    if (summary.type === 'topic') {
+      return (
+        <div className="mx-auto max-w-lg space-y-8 px-4 py-10 safe-top lg:max-w-3xl">
+          <section className="text-center">
+            <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <CheckCircle2 className="size-10" />
+            </div>
+
+            <h1 className="text-3xl font-bold">
+              Απαντήσατε σε όλες τις ερωτήσεις!
+            </h1>
+            <p className="mt-2 text-muted-foreground">{summary.theme}</p>
+
+            <p className="mt-6 text-5xl font-bold tabular-nums">
+              {summary.score}
+              <span className="text-2xl text-muted-foreground">
+                /{summary.total}
+              </span>
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {summary.wrong} λάθη σε αυτή τη συνεδρία
+            </p>
+
+            {(summary.answerStreak > 0 || summary.sessionBestStreak > 0) && (
+              <div className="mt-5 flex flex-col items-center gap-2">
+                {summary.answerStreak > 0 ? (
+                  <AnswerStreakBadge count={summary.answerStreak} />
+                ) : (
+                  <p className="text-sm font-semibold text-violet-400">
+                    Καλύτερο σερί στη συνεδρία: {summary.sessionBestStreak}{' '}
+                    σωστές
+                  </p>
+                )}
+              </div>
+            )}
+
+            <p className="mt-6 text-base font-semibold text-foreground">
+              Θέλετε να επαναλάβετε αυτό το θέμα ερωτήσεων;
+            </p>
+          </section>
+
+          <section className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={() => router.refresh()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+            >
+              <RotateCcw className="size-4" />
+              Ναι, επανάληψη
+            </button>
+            <Link
+              href="/topics"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
+            >
+              Όχι, πίσω στα θέματα
+            </Link>
+          </section>
+        </div>
+      );
+    }
+
     const percentage =
       summary.total > 0
         ? Math.round((summary.score / summary.total) * 100)
@@ -430,7 +688,7 @@ export function PracticeClient({
       <div className="flex flex-col items-center gap-4 py-20 text-center">
         <p className="text-muted-foreground">
           {mode === 'weak'
-            ? 'Δεν έχεις ακόμα λανθασμένες ερωτήσεις σε αυτή την κατηγορία. Κάνε ένα τεστ πρώτα!'
+            ? 'Δεν έχεις λανθασμένες ερωτήσεις σε αυτή την κατηγορία.'
             : 'Δεν βρέθηκαν ερωτήσεις για αυτή την κατηγορία.'}
         </p>
         <Link
@@ -468,7 +726,14 @@ export function PracticeClient({
         timerDisplay="∞"
         bookmarked={bookmarks.has(currentQuestion.qcod)}
         onToggleBookmark={toggleBookmark}
-        exitHref="/start"
+        exitHref={
+          isTopicMode
+            ? hrefWithCategory('/topics', category.kcod)
+            : hrefWithCategory('/start', category.kcod)
+        }
+        exitConfirmation={
+          mode === 'quick' ? TEST_EXIT_CONFIRMATION.quick : null
+        }
       />
 
       <QuestionNumberStrip
@@ -505,6 +770,7 @@ export function PracticeClient({
         revealed={revealed}
         isLast={isLastQuestion}
         isSubmitting={isSubmitting}
+        lastConfirmLabel={isTopicMode ? 'Τέλος' : undefined}
       />
     </div>
   );

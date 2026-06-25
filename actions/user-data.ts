@@ -15,8 +15,16 @@ import {
 } from '@/lib/daily-streak';
 import { getAuthUser } from '@/lib/auth/server';
 import { createClient } from '@/lib/supabase/server';
-import type { ExamAnswerRecord } from '@/types/exam';
+import {
+  buildQuestionAttemptRows,
+  resolveQuestionAttemptSource,
+} from '@/lib/question-attempts';
+import {
+  parseSoundPreferences,
+} from '@/lib/sound-preferences';
+import type { SoundPreferences } from '@/lib/sound-library';
 import type { LeaderboardEntry } from '@/types/database';
+import type { ExamAnswerRecord } from '@/types/exam';
 
 export type SaveExamResultResponse = {
   resultId: string;
@@ -64,6 +72,7 @@ export async function saveExamResult(params: {
   durationSeconds: number | null;
   answers: ExamAnswerRecord[];
   answerStreakAlreadyRecorded?: boolean;
+  skipWrongQuestionUpdates?: boolean;
 }): Promise<SaveExamResultResponse | null> {
   const user = await getAuthUser();
   if (!user) return null;
@@ -96,14 +105,28 @@ export async function saveExamResult(params: {
       }))
     );
 
-    // Upsert wrong questions counter, storing the last selected answer
-    const wrongAnswers = params.answers.filter((a) => !a.isCorrect);
-    for (const a of wrongAnswers) {
-      await supabase.rpc('increment_wrong_question', {
-        p_user_id: user.id,
-        p_qcod: a.qcod,
-        p_selected_aaa: a.selectedAaa,
-      });
+    const attemptSource = resolveQuestionAttemptSource({
+      title: params.title,
+      durationSeconds: params.durationSeconds,
+    });
+
+    // General question history: batch-logged for exams and quick tests at finish.
+    // Topic / weak practice record per answer via recordPracticeStep / recordWeakPracticeStep.
+    if (attemptSource === 'exam' || attemptSource === 'practice') {
+      await supabase.from('user_question_attempts').insert(
+        buildQuestionAttemptRows(user.id, params.kcod, params.answers, attemptSource)
+      );
+    }
+
+    if (!params.skipWrongQuestionUpdates && attemptSource === 'exam') {
+      const wrongAnswers = params.answers.filter((a) => !a.isCorrect);
+      for (const a of wrongAnswers) {
+        await supabase.rpc('increment_wrong_question', {
+          p_user_id: user.id,
+          p_qcod: a.qcod,
+          p_selected_aaa: a.selectedAaa,
+        });
+      }
     }
   }
 
@@ -142,6 +165,46 @@ export async function recordAnswerStreakStep(
     message: messages[0] ?? null,
     currentStreak: profile?.current_answer_streak ?? 0,
   };
+}
+
+export async function recordPracticeStep(params: {
+  qcod: number;
+  kcod: number;
+  selectedAaa: number;
+  isCorrect: boolean;
+}): Promise<{ streakMessage: string | null } | null> {
+  const user = await getAuthUser();
+  if (!user) return null;
+
+  const supabase = await createClient();
+
+  const { error: attemptError } = await supabase
+    .from('user_question_attempts')
+    .insert({
+      user_id: user.id,
+      qcod: params.qcod,
+      kcod: params.kcod,
+      selected_aaa: params.selectedAaa,
+      is_correct: params.isCorrect,
+      source: 'practice',
+      theme: null,
+    });
+
+  if (attemptError) {
+    throw new Error(attemptError.message);
+  }
+
+  if (!params.isCorrect) {
+    await supabase.rpc('increment_wrong_question', {
+      p_user_id: user.id,
+      p_qcod: params.qcod,
+      p_selected_aaa: params.selectedAaa,
+    });
+  }
+
+  const streak = await updateDailyStreak(supabase, user.id);
+
+  return { streakMessage: streak?.message ?? null };
 }
 
 async function updateAnswerStreak(
@@ -291,13 +354,14 @@ export async function getExamHistory(limit = 20) {
 
   const { data } = await supabase
     .from('user_exam_results')
-    .select('id, kcod, title, score, total, passed, created_at')
+    .select('id, kcod, title, score, total, passed, duration_seconds, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(limit);
 
   return (data ?? []).map((r) => ({
     ...r,
+    duration_seconds: r.duration_seconds ?? null,
     percentage: r.total > 0 ? Math.round((r.score / r.total) * 100) : 0,
   }));
 }
@@ -500,7 +564,7 @@ export async function getProfile() {
 
   const { data } = await supabase
     .from('profiles')
-    .select('user_id, username, created_at')
+    .select('user_id, username, avatar_url, created_at, sound_preferences')
     .eq('user_id', user.id)
     .single();
 
@@ -545,6 +609,27 @@ export async function updateUsername(username: string) {
   }
 }
 
+export async function updateSoundPreferences(
+  preferences: SoundPreferences
+) {
+  const user = await getAuthUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const parsed = parseSoundPreferences(preferences);
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ sound_preferences: parsed })
+    .eq('user_id', user.id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return parsed;
+}
+
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 
 export async function getLeaderboard(kcod: number): Promise<LeaderboardEntry[]> {
@@ -558,11 +643,14 @@ export async function getLeaderboard(kcod: number): Promise<LeaderboardEntry[]> 
   return (data ?? []).map((entry) => ({
     user_id: entry.user_id,
     username: entry.username,
+    avatar_url: entry.avatar_url ?? null,
     total_xp: Number(entry.total_xp),
-    total_tests: Number(entry.total_tests),
+    quick_tests: Number(entry.quick_tests),
     passed_tests: Number(entry.passed_tests),
-    best_streak: Number(entry.best_streak),
-    daily_streak: Number(entry.daily_streak),
+    simulation_tests: Number(entry.simulation_tests),
+    daily_streak_current: Number(entry.daily_streak_current),
+    daily_streak_longest: Number(entry.daily_streak_longest),
+    best_answer_streak: Number(entry.best_answer_streak),
     rank: Number(entry.rank),
   }));
 }

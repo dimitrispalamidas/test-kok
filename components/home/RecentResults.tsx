@@ -1,35 +1,43 @@
 import { CheckCircle2, XCircle } from 'lucide-react';
 import type { getExamHistory } from '@/actions/user-data';
+import { ATHENS_TIMEZONE } from '@/lib/daily-streak';
 import { cn } from '@/lib/utils';
 
 type HistoryEntry = Awaited<ReturnType<typeof getExamHistory>>[number];
 
 type RecentResultsProps = {
   history: HistoryEntry[];
+  title?: string;
 };
 
-const dateFormatter = new Intl.DateTimeFormat('el', {
+const dateTimeFormatter = new Intl.DateTimeFormat('el', {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: ATHENS_TIMEZONE,
 });
 
-function formatDate(iso: string): string {
+function formatDateTime(iso: string): string {
   try {
-    return dateFormatter.format(new Date(iso));
+    return dateTimeFormatter.format(new Date(iso));
   } catch {
     return '';
   }
 }
 
-export function RecentResults({ history }: RecentResultsProps) {
+export function RecentResults({
+  history,
+  title = 'Πρόσφατα Αποτελέσματα',
+}: RecentResultsProps) {
   if (history.length === 0) {
     return null;
   }
 
   return (
     <section className="space-y-3">
-      <h2 className="section-title">Πρόσφατα Αποτελέσματα</h2>
+      <h2 className="section-title">{title}</h2>
 
       <div className="space-y-3">
         {history.map((entry) => (
@@ -56,7 +64,7 @@ export function RecentResults({ history }: RecentResultsProps) {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold leading-tight">{entry.title}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {formatDate(entry.created_at)}
+                  {formatDateTime(entry.created_at)}
                 </p>
               </div>
 

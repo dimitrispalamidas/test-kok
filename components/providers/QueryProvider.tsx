@@ -8,6 +8,7 @@ import {
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useEffect, useState } from 'react';
 import { getCategories } from '@/actions/categories';
+import { SoundPreferencesSync } from '@/components/providers/SoundPreferencesSync';
 import {
   getAnswerStreakStatus,
   getDailyStreakStatus,
@@ -80,6 +81,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <PrefetchAppData />
+      <SoundPreferencesSync />
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

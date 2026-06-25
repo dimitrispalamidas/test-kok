@@ -93,9 +93,7 @@ function CategorySelectorInner({
           <Icon className="size-6" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-            Κατηγορία Οχήματος
-          </p>
+          <p className="card-field-label">Κατηγορία Οχήματος</p>
           <p className="card-title truncate">{label}</p>
         </div>
         <span className="rounded-lg bg-primary/15 px-2.5 py-1 text-sm font-extrabold text-primary">

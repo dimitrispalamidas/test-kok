@@ -5,6 +5,7 @@ export const queryKeys = {
   dailyStreak: () => ['daily-streak'] as const,
   answerStreak: () => ['answer-streak'] as const,
   profile: () => ['profile'] as const,
+  profileInsights: (kcod: number) => ['profile-insights', kcod] as const,
   currentUser: () => ['current-user'] as const,
   leaderboard: (kcod: number) => ['leaderboard', kcod] as const,
 };

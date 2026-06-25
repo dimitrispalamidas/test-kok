@@ -10,7 +10,8 @@ import {
   type WrongQuestWithAnswers,
 } from '@/actions/questions';
 import { CategorySelector } from '@/components/home/CategorySelector';
-import { QuestionCard } from '@/components/ui/QuestionCard';
+import { SavedQuestionCard } from '@/components/questions/SavedQuestionCard';
+import { WrongQuestionCard } from '@/components/questions/WrongQuestionCard';
 import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { useCategory } from '@/hooks/use-category';
 import { useCategories } from '@/hooks/use-user-data';
@@ -112,23 +113,24 @@ export function QuestionsClient() {
         />
       ) : (
         <div className="space-y-4">
-          {activeQuestions.map((question, index) => (
-            <div
-              key={question.qcod}
-              className="rounded-2xl border border-border/60 bg-card p-4"
-            >
-              <QuestionCard
-                question={question}
-                questionNumber={index + 1}
-                totalQuestions={activeQuestions.length}
-                selectedAaa={tab === 'wrong' ? (question as WrongQuestWithAnswers).selectedAaa : null}
-                onSelect={() => {}}
-                revealMode
-                disabled
-                showProgress={false}
-              />
-            </div>
-          ))}
+          {tab === 'saved'
+            ? savedQuestions.map((question, index) => (
+                <SavedQuestionCard
+                  key={question.qcod}
+                  question={question}
+                  questionNumber={index + 1}
+                  totalQuestions={savedQuestions.length}
+                  kcod={kcod}
+                />
+              ))
+            : wrongQuestions.map((question, index) => (
+                <WrongQuestionCard
+                  key={question.qcod}
+                  question={question}
+                  questionNumber={index + 1}
+                  totalQuestions={wrongQuestions.length}
+                />
+              ))}
         </div>
       )}
     </div>

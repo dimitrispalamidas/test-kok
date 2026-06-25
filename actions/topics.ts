@@ -2,12 +2,23 @@
 
 import { unstable_cache } from 'next/cache';
 import { isExamCategory, LANG } from '@/lib/constants';
+import { getAuthUser } from '@/lib/auth/server';
+import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
+import {
+  aggregateAttemptCountsByTheme,
+  fetchCategoryAttemptRecords,
+} from '@/lib/topic-stats';
 import { extractTheme } from '@/lib/topics';
 
 export type TopicWithCount = {
   theme: string;
   questionCount: number;
+};
+
+export type TopicPracticeStats = {
+  correct: number;
+  wrong: number;
 };
 
 async function fetchTopics(kcod: number): Promise<TopicWithCount[]> {
@@ -46,4 +57,21 @@ export async function getTopics(kcod: number): Promise<TopicWithCount[]> {
     ['topics', String(kcod)],
     { revalidate: 3600, tags: ['topics', `topics-${kcod}`] }
   )();
+}
+
+export async function getTopicStatsByCategory(
+  kcod: number
+): Promise<Record<string, TopicPracticeStats>> {
+  const user = await getAuthUser();
+  if (!user) return {};
+
+  if (!isExamCategory(kcod)) {
+    throw new Error('Invalid exam category');
+  }
+
+  const supabase = await createClient();
+  const records = await fetchCategoryAttemptRecords(supabase, user.id, kcod);
+  const countsByTheme = await aggregateAttemptCountsByTheme(supabase, records);
+
+  return Object.fromEntries(countsByTheme);
 }

@@ -11,8 +11,12 @@ import { ExamHeader } from '@/components/exam/ExamHeader';
 import { useExamTimer } from '@/components/exam/useExamTimer';
 import { QuestionCard } from '@/components/ui/QuestionCard';
 import { QuestionNumberStrip } from '@/components/ui/QuestionNumberStrip';
-import { invalidateUserData } from '@/lib/invalidate-user-data';
+import { hrefWithCategory } from '@/lib/category-url';
+import { SIMULATION_EXAM_TITLE, TEST_EXIT_CONFIRMATION } from '@/lib/exam-session';
 import { CATEGORY_LABELS, getPassThreshold } from '@/lib/constants';
+import { invalidateUserData } from '@/lib/invalidate-user-data';
+import { playStreakSound } from '@/lib/sound-effects';
+import { useQuestionBookmarks } from '@/hooks/use-question-bookmarks';
 import type { Kateg, QuestWithAnswers } from '@/types/database';
 import {
   computeExamScore,
@@ -38,7 +42,7 @@ export function ExamClient({ category, questions }: ExamClientProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number | null>>({});
   const [submitted, setSubmitted] = useState(false);
-  const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
+  const { bookmarks, toggleBookmark: saveBookmark } = useQuestionBookmarks();
   const startTimeRef = useRef<number>(Date.now());
 
   const passThreshold = getPassThreshold(category.kcod);
@@ -75,7 +79,7 @@ export function ExamClient({ category, questions }: ExamClientProps) {
 
     saveExamResult({
       kcod: category.kcod,
-      title: 'Τυχαίο Τεστ',
+      title: SIMULATION_EXAM_TITLE,
       score,
       total: questions.length,
       passed,
@@ -87,6 +91,7 @@ export function ExamClient({ category, questions }: ExamClientProps) {
           toast.success(response.streak.message, { duration: 5000 });
         }
         for (const message of response?.answerStreakMessages ?? []) {
+          playStreakSound();
           toast.success(message, { duration: 5000 });
         }
         invalidateUserData(queryClient);
@@ -175,15 +180,7 @@ export function ExamClient({ category, questions }: ExamClientProps) {
 
   const toggleBookmark = () => {
     if (!currentQuestion) return;
-    setBookmarks((prev) => {
-      const next = new Set(prev);
-      if (next.has(currentQuestion.qcod)) {
-        next.delete(currentQuestion.qcod);
-      } else {
-        next.add(currentQuestion.qcod);
-      }
-      return next;
-    });
+    void saveBookmark(currentQuestion.qcod);
   };
 
   if (!currentQuestion) {
@@ -203,7 +200,8 @@ export function ExamClient({ category, questions }: ExamClientProps) {
         isUrgent={isUrgent}
         bookmarked={bookmarks.has(currentQuestion.qcod)}
         onToggleBookmark={toggleBookmark}
-        exitHref="/"
+        exitHref={hrefWithCategory('/', category.kcod)}
+        exitConfirmation={TEST_EXIT_CONFIRMATION.simulation}
       />
 
       <QuestionNumberStrip

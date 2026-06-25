@@ -36,3 +36,16 @@ export function isExamCategory(kcod: number): kcod is ExamCategoryId {
 export function getPassThreshold(kcod: number): { min: number; total: number } {
   return PASS_THRESHOLDS[kcod] ?? { min: 22, total: 25 };
 }
+
+export const STAT_LABELS = {
+  dailyStreakCurrent: 'Σερί συνεχών ημερών',
+  dailyStreakBest: 'Μεγαλύτερο σερί ημερών',
+  answerStreakBest: 'Μεγαλύτερο σερί σωστών απαντήσεων',
+  simulationTests: 'Τεστ Προσομοίωσης',
+} as const;
+
+export function getDailyStreakStatLabel(currentStreak: number): string {
+  return currentStreak > 0
+    ? STAT_LABELS.dailyStreakCurrent
+    : STAT_LABELS.dailyStreakBest;
+}

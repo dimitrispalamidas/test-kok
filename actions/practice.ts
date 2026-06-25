@@ -202,3 +202,28 @@ export async function getWeakPracticeQuestions(
     hasMore: false,
   };
 }
+
+export async function recordWeakPracticeStep(params: {
+  qcod: number;
+  kcod: number;
+  selectedAaa: number;
+  isCorrect: boolean;
+}): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { error } = await supabase.rpc('record_weak_practice_step', {
+    p_qcod: params.qcod,
+    p_kcod: params.kcod,
+    p_selected_aaa: params.selectedAaa,
+    p_is_correct: params.isCorrect,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}

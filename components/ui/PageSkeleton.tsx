@@ -14,11 +14,13 @@ function SkeletonBlock({ className }: { className?: string }) {
 type PageSkeletonProps = {
   showStats?: boolean;
   showCta?: boolean;
+  showRecentResults?: boolean;
 };
 
 export function PageSkeleton({
   showStats = true,
   showCta = true,
+  showRecentResults = true,
 }: PageSkeletonProps) {
   return (
     <div className="page-container space-y-6" aria-busy="true" aria-label="Φόρτωση">
@@ -40,16 +42,18 @@ export function PageSkeleton({
         </div>
       )}
 
-      <div className="space-y-3">
-        <SkeletonBlock className="h-5 w-32" />
-        <SkeletonBlock className="h-20 w-full" />
-        <SkeletonBlock className="h-20 w-full" />
-      </div>
+      {showRecentResults && (
+        <div className="space-y-3">
+          <SkeletonBlock className="h-5 w-32" />
+          <SkeletonBlock className="h-20 w-full" />
+          <SkeletonBlock className="h-20 w-full" />
+        </div>
+      )}
     </div>
   );
 }
 
-export function StatsGridSkeleton({ count = 5 }: { count?: number }) {
+export function StatsGridSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 gap-3" aria-busy="true">
       {Array.from({ length: count }, (_, i) => (

@@ -2,9 +2,11 @@
 
 import { CheckCircle2, Home, RotateCcw, XCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { QuestionCard } from '@/components/ui/QuestionCard';
+import { fireSuccessConfetti } from '@/lib/confetti';
 import { getPassThreshold } from '@/lib/constants';
+import { playTestResultSound } from '@/lib/sound-effects';
 import { cn } from '@/lib/utils';
 import {
   computeExamScore,
@@ -19,6 +21,7 @@ type ExamResultsClientProps = {
 export function ExamResultsClient({ kcod }: ExamResultsClientProps) {
   const [result, setResult] = useState<StoredExamResult | null>(null);
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
+  const playedResultSoundRef = useRef(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem(getExamResultStorageKey(kcod));
@@ -51,6 +54,16 @@ export function ExamResultsClient({ kcod }: ExamResultsClientProps) {
     if (!result) return false;
     return result.score >= passMin;
   }, [result, passMin]);
+
+  useEffect(() => {
+    if (!result || playedResultSoundRef.current) return;
+
+    playedResultSoundRef.current = true;
+    playTestResultSound(passed);
+    if (passed) {
+      fireSuccessConfetti();
+    }
+  }, [passed, result]);
 
   const wrongQuestions = useMemo(() => {
     if (!result) return [];

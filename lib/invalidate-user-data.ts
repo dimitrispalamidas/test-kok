@@ -11,4 +11,8 @@ export function invalidateUserData(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.answerStreak() });
   queryClient.invalidateQueries({ queryKey: queryKeys.profile() });
   queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+  queryClient.invalidateQueries({ queryKey: ['wrong-questions'] });
+  queryClient.invalidateQueries({ queryKey: ['saved-questions'] });
+  queryClient.invalidateQueries({ queryKey: ['topic-stats'] });
+  queryClient.invalidateQueries({ queryKey: ['profile-insights'] });
 }

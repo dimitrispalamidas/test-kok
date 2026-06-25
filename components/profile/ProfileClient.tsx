@@ -3,28 +3,31 @@
 import {
   Calendar,
   Car,
-  CheckCircle2,
   ChevronDown,
   FileText,
   Gauge,
   Heart,
   Leaf,
   LogIn,
-  LogOut,
-  Star,
   TriangleAlert,
   User,
   Wrench,
-  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getProfileInsights } from '@/actions/profile-insights';
 import { signOut, updateUsername } from '@/actions/user-data';
+import { ActivityHeatmap } from '@/components/profile/ActivityHeatmap';
+import { AchievementGrid } from '@/components/profile/AchievementGrid';
+import { ProfileIdentitySection } from '@/components/profile/ProfileIdentitySection';
+import { WeakTopicsSection } from '@/components/profile/WeakTopicsSection';
 import { CategorySelector } from '@/components/home/CategorySelector';
+import { RecentResults } from '@/components/home/RecentResults';
 import { PageSkeleton } from '@/components/ui/PageSkeleton';
+import { useCategory } from '@/hooks/use-category';
 import { useCategoryStats } from '@/hooks/use-category-stats';
 import {
   useCategories,
@@ -34,8 +37,24 @@ import {
   useSavedWrongCountsByCategory,
 } from '@/hooks/use-user-data';
 import { queryKeys } from '@/lib/query-keys';
-import { CATEGORY_LABELS } from '@/lib/constants';
+import { ATHENS_TIMEZONE } from '@/lib/daily-streak';
+import { getExamResultDisplayTitle, isCountableTestResult } from '@/lib/exam-session';
+import {
+  DEFAULT_SOUND_PREFERENCES,
+  type SoundPreferences,
+} from '@/lib/sound-library';
+import {
+  parseSoundPreferences,
+  setSoundPreferences,
+} from '@/lib/sound-preferences';
 import { cn } from '@/lib/utils';
+
+const memberSinceFormatter = new Intl.DateTimeFormat('el', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: ATHENS_TIMEZONE,
+});
 
 const infoItems = [
   {
@@ -112,17 +131,10 @@ const infoItems = [
   },
 ];
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('el-GR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
-
 export function ProfileClient() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { kcod } = useCategory();
   const { data: categories = [], isLoading: categoriesLoading } =
     useCategories();
   const { data: user } = useCurrentUser();
@@ -133,25 +145,52 @@ export function ProfileClient() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [usernameInput, setUsernameInput] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [savingUsername, setSavingUsername] = useState(false);
-  const [showUsernameForm, setShowUsernameForm] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [soundPreferences, setSoundPreferencesState] = useState<SoundPreferences>(
+    DEFAULT_SOUND_PREFERENCES
+  );
+
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
 
   useEffect(() => {
     if (profile) {
       setUsernameInput(profile.username);
-      setShowUsernameForm(profile.isDefaultUsername);
+      setAvatarUrl(profile.avatar_url ?? null);
+      const preferences = parseSoundPreferences(profile.sound_preferences);
+      setSoundPreferencesState(preferences);
+      setSoundPreferences(preferences);
     }
   }, [profile]);
 
-  const { history: filteredHistory, stats } = useCategoryStats(
+  const handleSoundPreferencesChange = (preferences: SoundPreferences) => {
+    setSoundPreferencesState(preferences);
+    setSoundPreferences(preferences);
+    queryClient.setQueryData(queryKeys.profile(), (current: typeof profile) =>
+      current ? { ...current, sound_preferences: preferences } : current
+    );
+  };
+
+  const { history: filteredHistory } = useCategoryStats(
     history,
     countsByCategory
   );
 
-  const successRate =
-    stats.totalQuestions > 0
-      ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100)
-      : 0;
+  const examHistory = filteredHistory.filter(isCountableTestResult);
+
+  const { data: insights, isLoading: insightsLoading } = useQuery({
+    queryKey: queryKeys.profileInsights(kcod),
+    queryFn: () => getProfileInsights(kcod),
+    enabled: Boolean(user),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const memberSince = profile?.created_at
+    ? memberSinceFormatter.format(new Date(profile.created_at))
+    : '';
 
   const handleSignOut = async () => {
     setLoggingOut(true);
@@ -162,6 +201,7 @@ export function ProfileClient() {
       queryClient.removeQueries({ queryKey: queryKeys.examHistory(50) });
       queryClient.removeQueries({ queryKey: queryKeys.savedWrongCounts() });
       queryClient.removeQueries({ queryKey: queryKeys.dailyStreak() });
+      queryClient.removeQueries({ queryKey: ['profile-insights'] });
       router.push('/');
     } catch {
       toast.error('Σφάλμα αποσύνδεσης');
@@ -178,17 +218,24 @@ export function ProfileClient() {
     setSavingUsername(true);
     try {
       await updateUsername(usernameInput);
-      toast.success('Το όνομα ενημερώθηκε');
-      setShowUsernameForm(false);
+      toast.success('Το nickname ενημερώθηκε');
       await queryClient.invalidateQueries({ queryKey: queryKeys.profile() });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Σφάλμα αποθήκευσης');
+      throw error;
     } finally {
       setSavingUsername(false);
     }
   };
 
-  if (categoriesLoading) {
+  const handleAvatarUpdated = (url: string) => {
+    setAvatarUrl(url);
+    queryClient.setQueryData(queryKeys.profile(), (current: typeof profile) =>
+      current ? { ...current, avatar_url: url } : current
+    );
+  };
+
+  if (!isReady || categoriesLoading) {
     return <PageSkeleton showCta={false} />;
   }
 
@@ -201,113 +248,42 @@ export function ProfileClient() {
 
       <CategorySelector categories={categories} />
 
-      {/* Auth section */}
       {user ? (
-        <section className="rounded-2xl border border-border/60 bg-card p-4">
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
-              <User className="size-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="card-title truncate">
-                {profile?.username ?? user.email}
-              </p>
-              <p className="card-subtitle truncate">{user.email}</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              disabled={loggingOut}
-              className={cn(
-                'flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5',
-                'text-xs font-medium text-muted-foreground transition-colors hover:bg-accent',
-                'disabled:opacity-50'
-              )}
-            >
-              <LogOut className="size-3.5" />
-              Αποσύνδεση
-            </button>
-          </div>
+        <>
+          <ProfileIdentitySection
+            username={profile?.username ?? user.email}
+            email={user.email}
+            avatarUrl={avatarUrl}
+            memberSince={memberSince}
+            isDefaultUsername={profile?.isDefaultUsername ?? false}
+            usernameInput={usernameInput}
+            savingUsername={savingUsername}
+            loggingOut={loggingOut}
+            onUsernameChange={setUsernameInput}
+            onSaveUsername={handleSaveUsername}
+            onSignOut={handleSignOut}
+            onAvatarUpdated={handleAvatarUpdated}
+            soundPreferences={soundPreferences}
+            onSoundPreferencesChange={handleSoundPreferencesChange}
+          />
 
-          {(showUsernameForm || profile) && (
-            <div className="mt-4 space-y-3 border-t border-border/40 pt-4">
-              {showUsernameForm && (
-                <p className="text-sm text-muted-foreground">
-                  Όρισε ένα nickname για να εμφανίζεσαι στην κατάταξη.
-                </p>
-              )}
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
-                  type="text"
-                  value={usernameInput}
-                  onChange={(event) => setUsernameInput(event.target.value)}
-                  maxLength={20}
-                  placeholder="nickname"
-                  className={cn(
-                    'flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm',
-                    'outline-none focus:border-primary focus:ring-2 focus:ring-primary/20'
-                  )}
-                />
-                <button
-                  type="button"
-                  onClick={handleSaveUsername}
-                  disabled={savingUsername || usernameInput.trim().length < 2}
-                  className={cn(
-                    'rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground',
-                    'transition-all hover:brightness-110 disabled:opacity-50'
-                  )}
-                >
-                  {savingUsername ? 'Αποθήκευση…' : 'Αποθήκευση'}
-                </button>
-              </div>
-              {!showUsernameForm && (
-                <button
-                  type="button"
-                  onClick={() => setShowUsernameForm(true)}
-                  className="text-xs font-medium text-primary hover:underline"
-                >
-                  Αλλαγή nickname
-                </button>
-              )}
+          {insightsLoading ? (
+            <div className="space-y-4">
+              <div className="h-32 animate-pulse rounded-2xl bg-muted/40" />
+              <div className="h-40 animate-pulse rounded-2xl bg-muted/40" />
             </div>
-          )}
-
-          {/* Stats grid */}
-          <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border/40 pt-4">
-            <div className="text-center">
-              <p className="text-2xl font-extrabold tabular-nums">{stats.totalTests}</p>
-              <p className="text-xs text-muted-foreground">Τεστ</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-extrabold tabular-nums text-success">{successRate}%</p>
-              <p className="text-xs text-muted-foreground">Επιτυχία</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-extrabold tabular-nums">
-                {stats.completedExams}
-              </p>
-              <p className="text-xs text-muted-foreground">Επιτυχημένα</p>
-            </div>
-          </div>
-
-          {/* Additional stats */}
-          {(stats.savedCount > 0 || stats.wrongCount > 0) && (
-            <div className="mt-3 flex gap-3 border-t border-border/40 pt-3">
-              {stats.savedCount > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Star className="size-3.5 text-warning" />
-                  <span>{stats.savedCount} αποθηκευμένες</span>
-                </div>
-              )}
-              {stats.wrongCount > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <XCircle className="size-3.5 text-destructive" />
-                  <span>{stats.wrongCount} λάθη</span>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
+          ) : insights ? (
+            <>
+              <AchievementGrid
+                achievements={insights.achievements}
+                kcod={kcod}
+                preview
+              />
+              <ActivityHeatmap activityDates={insights.activityDates} />
+              <WeakTopicsSection topics={insights.weakTopics} kcod={kcod} />
+            </>
+          ) : null}
+        </>
       ) : (
         <section className="rounded-2xl border border-dashed border-border/80 bg-card/60 p-6 text-center">
           <span className="mb-3 flex size-12 items-center justify-center rounded-xl bg-muted mx-auto">
@@ -331,49 +307,18 @@ export function ProfileClient() {
         </section>
       )}
 
-      {/* Exam history */}
-      {user && filteredHistory.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="section-title">Ιστορικό Εξετάσεων</h2>
-          <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
-            {filteredHistory.map((entry, idx) => {
-              const pct = entry.total > 0 ? Math.round((entry.score / entry.total) * 100) : 0;
-              return (
-                <div
-                  key={entry.id}
-                  className={cn(
-                    'flex items-center gap-3 px-4 py-3',
-                    idx > 0 && 'border-t border-border/40'
-                  )}
-                >
-                  {entry.passed ? (
-                    <CheckCircle2 className="size-4 shrink-0 text-success" />
-                  ) : (
-                    <XCircle className="size-4 shrink-0 text-destructive" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      {CATEGORY_LABELS[entry.kcod] ?? entry.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(entry.created_at)}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-sm font-semibold tabular-nums">
-                      {entry.score}/{entry.total}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{pct}%</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+      {user && examHistory.length > 0 && (
+        <RecentResults
+          title="Ιστορικό Εξετάσεων"
+          history={examHistory.map((entry) => ({
+            ...entry,
+            title: getExamResultDisplayTitle(entry),
+          }))}
+        />
       )}
 
       <section className="space-y-3">
-        <h2 className="section-title">Χρήσιμες Πληροφορίες</h2>
+        <h2 className="card-title">Χρήσιμες Πληροφορίες</h2>
 
         <div className="space-y-2">
           {infoItems.map(({ id, icon: Icon, label, content, iconBg, iconColor }) => {
@@ -393,7 +338,12 @@ export function ProfileClient() {
                   aria-expanded={isExpanded}
                   className="flex w-full items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-accent/30"
                 >
-                  <span className={cn('flex size-11 shrink-0 items-center justify-center rounded-2xl', iconBg)}>
+                  <span
+                    className={cn(
+                      'flex size-11 shrink-0 items-center justify-center rounded-2xl',
+                      iconBg
+                    )}
+                  >
                     <Icon className={cn('size-5', iconColor)} />
                   </span>
                   <span className="card-title flex-1">{label}</span>
@@ -418,7 +368,9 @@ export function ProfileClient() {
 
       <footer className="pb-4 text-center text-xs text-muted-foreground">
         <p>Έκδοση 0.1.0</p>
-        <p className="mt-1">Ταμπουρεάς Driving Test — Σχολή Οδηγών Σωτήρης Ταμπουρεάς</p>
+        <p className="mt-1">
+          Ταμπουρεάς Driving Test — Σχολή Οδηγών Σωτήρης Ταμπουρεάς
+        </p>
       </footer>
     </div>
   );

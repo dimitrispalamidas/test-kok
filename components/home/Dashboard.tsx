@@ -2,10 +2,8 @@
 
 import { ArrowRight, Play } from 'lucide-react';
 import Link from 'next/link';
-import { createSerializer, parseAsInteger } from 'nuqs';
 import { CategorySelector } from '@/components/home/CategorySelector';
 import { DailyStreakBanner } from '@/components/home/DailyStreakBanner';
-import { RecentResults } from '@/components/home/RecentResults';
 import { StatsGrid } from '@/components/home/StatsGrid';
 import { PageSkeleton, StatsGridSkeleton } from '@/components/ui/PageSkeleton';
 import { useCategory } from '@/hooks/use-category';
@@ -17,8 +15,7 @@ import {
   useExamHistory,
   useSavedWrongCountsByCategory,
 } from '@/hooks/use-user-data';
-
-const categorySerializer = createSerializer({ k: parseAsInteger });
+import { hrefWithCategory } from '@/lib/category-url';
 
 export function Dashboard() {
   const { data: categories = [], isLoading: categoriesLoading } =
@@ -29,16 +26,10 @@ export function Dashboard() {
   const { data: answerStreakStatus } = useAnswerStreakStatus();
 
   const { kcod } = useCategory();
-  const { history: filteredHistory, stats } = useCategoryStats(
-    history,
-    countsByCategory
-  );
-
-  const selected =
-    categories.find((c) => c.kcod === kcod) ?? categories[0] ?? null;
+  const { stats } = useCategoryStats(history, countsByCategory);
 
   if (categoriesLoading) {
-    return <PageSkeleton />;
+    return <PageSkeleton showRecentResults={false} />;
   }
 
   return (
@@ -53,7 +44,7 @@ export function Dashboard() {
       {streakStatus && <DailyStreakBanner status={streakStatus} />}
 
       <Link
-        href={categorySerializer('/start', { k: kcod })}
+        href={hrefWithCategory('/start', kcod)}
         className="group flex w-full items-center gap-4 rounded-2xl bg-primary px-6 py-5 font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:brightness-110 active:scale-[0.98]"
       >
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
@@ -67,13 +58,11 @@ export function Dashboard() {
         <StatsGridSkeleton />
       ) : (
         <StatsGrid
-          examQuestionCount={selected?.examQuestionCount ?? 0}
           stats={stats}
+          dailyStreak={streakStatus}
           answerStreak={answerStreakStatus}
         />
       )}
-
-      {!historyLoading && <RecentResults history={filteredHistory} />}
     </div>
   );
 }

@@ -1,5 +1,6 @@
-import { BarChart3, ClipboardList, Flame, Sparkles, Target } from 'lucide-react';
 import type { CategoryStats } from '@/lib/category-stats';
+import { getDailyStreakStatLabel, STAT_LABELS } from '@/lib/constants';
+import { getQuickTestStatLabel, HOME_STAT_DISPLAY } from '@/lib/stat-display';
 
 type StatCardProps = {
   icon: React.ComponentType<{ className?: string }>;
@@ -17,15 +18,18 @@ function StatCard({ icon: Icon, value, label, iconBg, iconColor }: StatCardProps
       </span>
       <div>
         <p className="text-3xl font-extrabold tabular-nums">{value}</p>
-        <p className="mt-0.5 text-sm text-muted-foreground">{label}</p>
+        <p className="mt-0.5 text-sm leading-snug text-muted-foreground">{label}</p>
       </div>
     </div>
   );
 }
 
 type StatsGridProps = {
-  examQuestionCount?: number;
   stats: CategoryStats;
+  dailyStreak?: {
+    currentStreak: number;
+    longestStreak: number;
+  } | null;
   answerStreak?: {
     currentStreak: number;
     bestStreak: number;
@@ -33,63 +37,53 @@ type StatsGridProps = {
 };
 
 export function StatsGrid({
-  examQuestionCount = 0,
   stats,
+  dailyStreak = null,
   answerStreak = null,
 }: StatsGridProps) {
-  const totalTests = stats.totalTests;
-  const successRate =
-    stats.totalQuestions > 0
-      ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100)
-      : 0;
-  const bestStreak = stats.bestStreak;
-  const completedExams = stats.completedExams;
+  const quickTests = stats.quickTests;
+  const simulationTests = stats.simulationTests;
+  const quickDisplay = HOME_STAT_DISPLAY.quickTests;
+  const simulationDisplay = HOME_STAT_DISPLAY.simulationTests;
+  const dailyDisplay = HOME_STAT_DISPLAY.dailyStreak;
+  const answerDisplay = HOME_STAT_DISPLAY.answerStreak;
 
   return (
     <div className="grid grid-cols-2 gap-3">
       <StatCard
-        icon={BarChart3}
-        value={String(totalTests)}
-        label="Συνολικά Τεστ"
-        iconBg="bg-primary/15"
-        iconColor="text-primary"
+        icon={quickDisplay.icon}
+        value={String(quickTests)}
+        label={getQuickTestStatLabel(quickTests)}
+        iconBg={quickDisplay.iconBg}
+        iconColor={quickDisplay.iconColor}
       />
       <StatCard
-        icon={Target}
-        value={`${successRate}%`}
-        label="Ποσοστό Επιτυχίας"
-        iconBg="bg-success/15"
-        iconColor="text-success"
+        icon={simulationDisplay.icon}
+        value={String(simulationTests)}
+        label={STAT_LABELS.simulationTests}
+        iconBg={simulationDisplay.iconBg}
+        iconColor={simulationDisplay.iconColor}
       />
-      <StatCard
-        icon={Flame}
-        value={String(bestStreak)}
-        label="Καλύτερο Σερί"
-        iconBg="bg-warning/15"
-        iconColor="text-warning"
-      />
-      <StatCard
-        icon={ClipboardList}
-        value={`${completedExams}/${examQuestionCount > 0 ? '∞' : '0'}`}
-        label="Τεστ Ολοκλήρωσης"
-        iconBg="bg-primary/15"
-        iconColor="text-primary"
-      />
+      {dailyStreak && (
+        <StatCard
+          icon={dailyDisplay.icon}
+          value={String(
+            dailyStreak.currentStreak > 0
+              ? dailyStreak.currentStreak
+              : dailyStreak.longestStreak
+          )}
+          label={getDailyStreakStatLabel(dailyStreak.currentStreak)}
+          iconBg={dailyDisplay.iconBg}
+          iconColor={dailyDisplay.iconColor}
+        />
+      )}
       {answerStreak && (
         <StatCard
-          icon={Sparkles}
-          value={String(
-            answerStreak.currentStreak > 0
-              ? answerStreak.currentStreak
-              : answerStreak.bestStreak
-          )}
-          label={
-            answerStreak.currentStreak > 0
-              ? 'Σερί Σωστών'
-              : 'Καλύτερο Σερί Σωστών'
-          }
-          iconBg="bg-violet-400/15"
-          iconColor="text-violet-400"
+          icon={answerDisplay.icon}
+          value={String(answerStreak.bestStreak)}
+          label={STAT_LABELS.answerStreakBest}
+          iconBg={answerDisplay.iconBg}
+          iconColor={answerDisplay.iconColor}
         />
       )}
     </div>
