@@ -16,7 +16,7 @@ export function TopicsClient({ categories, topicsByKcod }: TopicsClientProps) {
   const topics = topicsByKcod[kcod] ?? [];
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 px-4 py-6 safe-top lg:max-w-3xl">
+    <div className="page-container space-y-6">
       <header className="space-y-1">
         <p className="page-eyebrow">Εξάσκηση</p>
         <h1 className="page-title">Ανά Θέμα</h1>
