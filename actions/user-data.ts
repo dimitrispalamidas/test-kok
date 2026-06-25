@@ -11,6 +11,7 @@ import {
   type DailyStreakStatus,
   type DailyStreakUpdate,
 } from '@/lib/daily-streak';
+import { getAuthUser } from '@/lib/auth/server';
 import { createClient } from '@/lib/supabase/server';
 import type { ExamAnswerRecord } from '@/types/exam';
 import type { LeaderboardEntry } from '@/types/database';
@@ -24,9 +25,7 @@ export type SaveExamResultResponse = {
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export async function getUser() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+  return getAuthUser();
 }
 
 export async function signUp(email: string, password: string) {
@@ -64,9 +63,10 @@ export async function saveExamResult(params: {
   answers: ExamAnswerRecord[];
   answerStreakAlreadyRecorded?: boolean;
 }): Promise<SaveExamResultResponse | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return null;
+
+  const supabase = await createClient();
 
   const { data: result, error: resultError } = await supabase
     .from('user_exam_results')
@@ -124,11 +124,10 @@ export async function saveExamResult(params: {
 export async function recordAnswerStreakStep(
   isCorrect: boolean
 ): Promise<{ message: string | null; currentStreak: number } | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return null;
+
+  const supabase = await createClient();
 
   const messages = await updateAnswerStreak(supabase, user.id, [isCorrect]);
   const { data: profile } = await supabase
@@ -240,11 +239,10 @@ async function updateDailyStreak(
 }
 
 export async function getDailyStreakStatus(): Promise<DailyStreakStatus | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return null;
+
+  const supabase = await createClient();
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -264,9 +262,10 @@ export async function getDailyStreakStatus(): Promise<DailyStreakStatus | null> 
 }
 
 export async function getExamHistory(limit = 20) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return [];
+
+  const supabase = await createClient();
 
   const { data } = await supabase
     .from('user_exam_results')
@@ -282,9 +281,10 @@ export async function getExamHistory(limit = 20) {
 }
 
 export async function getUserStats() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return null;
+
+  const supabase = await createClient();
 
   // Fetch results ordered by date to compute streaks
   const { data: results } = await supabase
@@ -352,11 +352,10 @@ export async function getUserStats() {
 export async function getSavedWrongCountsByCategory(): Promise<
   Record<number, { savedCount: number; wrongCount: number }>
 > {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return {};
+
+  const supabase = await createClient();
 
   const [{ data: savedRows }, { data: wrongRows }] = await Promise.all([
     supabase
@@ -410,9 +409,10 @@ export async function getSavedWrongCountsByCategory(): Promise<
 // ─── Saved Questions ──────────────────────────────────────────────────────────
 
 export async function getSavedQuestionIds(): Promise<number[]> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return [];
+
+  const supabase = await createClient();
 
   const { data } = await supabase
     .from('user_saved_questions')
@@ -424,9 +424,10 @@ export async function getSavedQuestionIds(): Promise<number[]> {
 }
 
 export async function toggleSavedQuestion(qcod: number): Promise<boolean> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) throw new Error('Not authenticated');
+
+  const supabase = await createClient();
 
   const { data: existing } = await supabase
     .from('user_saved_questions')
@@ -453,9 +454,10 @@ export async function toggleSavedQuestion(qcod: number): Promise<boolean> {
 // ─── Wrong Questions ──────────────────────────────────────────────────────────
 
 export async function getWrongQuestionIds(): Promise<number[]> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return [];
+
+  const supabase = await createClient();
 
   const { data } = await supabase
     .from('user_wrong_questions')
@@ -469,11 +471,10 @@ export async function getWrongQuestionIds(): Promise<number[]> {
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
 export async function getProfile() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return null;
+
+  const supabase = await createClient();
 
   const { data } = await supabase
     .from('profiles')
@@ -504,11 +505,10 @@ export async function updateUsername(username: string) {
     throw new Error('Μόνο γράμματα, αριθμοί και _ επιτρέπονται');
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) throw new Error('Not authenticated');
+
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from('profiles')

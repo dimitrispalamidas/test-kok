@@ -11,6 +11,7 @@ import { ExamHeader } from '@/components/exam/ExamHeader';
 import { useExamTimer } from '@/components/exam/useExamTimer';
 import { QuestionCard } from '@/components/ui/QuestionCard';
 import { QuestionNumberStrip } from '@/components/ui/QuestionNumberStrip';
+import { invalidateUserData } from '@/lib/invalidate-user-data';
 import { CATEGORY_LABELS, getPassThreshold } from '@/lib/constants';
 import type { Kateg, QuestWithAnswers } from '@/types/database';
 import {
@@ -88,7 +89,7 @@ export function ExamClient({ category, questions }: ExamClientProps) {
         for (const message of response?.answerStreakMessages ?? []) {
           toast.success(message, { duration: 5000 });
         }
-        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        invalidateUserData(queryClient);
       })
       .catch(() => {});
 

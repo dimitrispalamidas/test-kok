@@ -2,12 +2,16 @@
 
 import { Award, BarChart3, Target, Trophy } from 'lucide-react';
 import { useState } from 'react';
-import type { getExamHistory } from '@/actions/user-data';
-import type { CategoryWithStats } from '@/actions/categories';
 import { CategorySelector } from '@/components/home/CategorySelector';
 import { LeaderboardPanel } from '@/components/ranking/LeaderboardPanel';
+import { PageSkeleton, StatsGridSkeleton } from '@/components/ui/PageSkeleton';
 import { useCategoryStats } from '@/hooks/use-category-stats';
-import type { CategoryCounts } from '@/lib/category-stats';
+import {
+  useCategories,
+  useCurrentUser,
+  useExamHistory,
+  useSavedWrongCountsByCategory,
+} from '@/hooks/use-user-data';
 import { cn } from '@/lib/utils';
 
 type RankingTab = 'charts' | 'ranking' | 'achievements';
@@ -22,20 +26,14 @@ const tabs: {
   { id: 'achievements', label: 'Επιτεύγματα', icon: Award },
 ];
 
-type RankingClientProps = {
-  categories: CategoryWithStats[];
-  history: Awaited<ReturnType<typeof getExamHistory>>;
-  countsByCategory: CategoryCounts;
-  currentUserId: string | null;
-};
-
-export function RankingClient({
-  categories,
-  history,
-  countsByCategory,
-  currentUserId,
-}: RankingClientProps) {
+export function RankingClient() {
   const [tab, setTab] = useState<RankingTab>('charts');
+  const { data: categories = [], isLoading: categoriesLoading } =
+    useCategories();
+  const { data: history = [], isLoading: historyLoading } = useExamHistory(50);
+  const { data: countsByCategory = {} } = useSavedWrongCountsByCategory();
+  const { data: currentUser } = useCurrentUser();
+
   const { stats } = useCategoryStats(history, countsByCategory);
 
   const successRate =
@@ -44,6 +42,11 @@ export function RankingClient({
       : 0;
 
   const hasData = stats.totalTests > 0;
+  const statsLoading = historyLoading;
+
+  if (categoriesLoading) {
+    return <PageSkeleton />;
+  }
 
   return (
     <div className="page-container space-y-6">
@@ -73,7 +76,7 @@ export function RankingClient({
         ))}
       </div>
 
-      {!hasData && tab === 'charts' ? (
+      {!hasData && tab === 'charts' && !statsLoading ? (
         <div className="flex flex-col items-center gap-4 py-24">
           <span className="flex size-20 items-center justify-center rounded-full bg-primary/10">
             <BarChart3 className="size-10 text-primary" />
@@ -83,38 +86,42 @@ export function RankingClient({
           </p>
         </div>
       ) : tab === 'charts' ? (
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard
-            icon={BarChart3}
-            value={String(stats.totalTests)}
-            label="Συνολικά Τεστ"
-            iconBg="bg-primary/15"
-            iconColor="text-primary"
-          />
-          <StatCard
-            icon={Target}
-            value={`${successRate}%`}
-            label="Ποσοστό Επιτυχίας"
-            iconBg="bg-success/15"
-            iconColor="text-success"
-          />
-          <StatCard
-            icon={Trophy}
-            value={String(stats.completedExams)}
-            label="Επιτυχημένα"
-            iconBg="bg-emerald-400/15"
-            iconColor="text-emerald-400"
-          />
-          <StatCard
-            icon={Award}
-            value={String(stats.bestStreak)}
-            label="Καλύτερο Σερί"
-            iconBg="bg-warning/15"
-            iconColor="text-warning"
-          />
-        </div>
+        statsLoading ? (
+          <StatsGridSkeleton />
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              icon={BarChart3}
+              value={String(stats.totalTests)}
+              label="Συνολικά Τεστ"
+              iconBg="bg-primary/15"
+              iconColor="text-primary"
+            />
+            <StatCard
+              icon={Target}
+              value={`${successRate}%`}
+              label="Ποσοστό Επιτυχίας"
+              iconBg="bg-success/15"
+              iconColor="text-success"
+            />
+            <StatCard
+              icon={Trophy}
+              value={String(stats.completedExams)}
+              label="Επιτυχημένα"
+              iconBg="bg-emerald-400/15"
+              iconColor="text-emerald-400"
+            />
+            <StatCard
+              icon={Award}
+              value={String(stats.bestStreak)}
+              label="Καλύτερο Σερί"
+              iconBg="bg-warning/15"
+              iconColor="text-warning"
+            />
+          </div>
+        )
       ) : tab === 'ranking' ? (
-        <LeaderboardPanel currentUserId={currentUserId} />
+        <LeaderboardPanel currentUserId={currentUser?.id ?? null} />
       ) : (
         <div className="flex flex-col items-center gap-4 py-24">
           <span className="flex size-20 items-center justify-center rounded-full bg-primary/10">

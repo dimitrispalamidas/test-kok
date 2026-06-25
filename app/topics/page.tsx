@@ -4,16 +4,14 @@ import { TopicsClient } from '@/components/topics/TopicsClient';
 import { EXAM_CATEGORIES } from '@/lib/constants';
 
 export default async function TopicsPage() {
-  const categories = await getCategories();
+  const [categories, ...topicLists] = await Promise.all([
+    getCategories(),
+    ...EXAM_CATEGORIES.map((kcod) => getTopics(kcod)),
+  ]);
 
-  const topicsByKcod: Record<
-    number,
-    Awaited<ReturnType<typeof getTopics>>
-  > = {};
-
-  for (const kcod of EXAM_CATEGORIES) {
-    topicsByKcod[kcod] = await getTopics(kcod);
-  }
+  const topicsByKcod = Object.fromEntries(
+    EXAM_CATEGORIES.map((kcod, index) => [kcod, topicLists[index] ?? []])
+  );
 
   return <TopicsClient categories={categories} topicsByKcod={topicsByKcod} />;
 }

@@ -1,7 +1,8 @@
 'use server';
 
+import { unstable_cache } from 'next/cache';
 import { EXAM_CATEGORIES } from '@/lib/constants';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import type { Kateg } from '@/types/database';
 
 export type CategoryWithStats = Kateg & {
@@ -9,8 +10,8 @@ export type CategoryWithStats = Kateg & {
   examQuestionCount: number;
 };
 
-export async function getCategories(): Promise<CategoryWithStats[]> {
-  const supabase = await createClient();
+async function fetchCategoriesWithStats(): Promise<CategoryWithStats[]> {
+  const supabase = createStaticClient();
 
   const { data: categories, error } = await supabase
     .from('kateg')
@@ -26,29 +27,35 @@ export async function getCategories(): Promise<CategoryWithStats[]> {
     return [];
   }
 
-  const results: CategoryWithStats[] = [];
+  return Promise.all(
+    categories.map(async (category) => {
+      const [{ count: questionCount }, { data: pools }] = await Promise.all([
+        supabase
+          .from('quest')
+          .select('*', { count: 'exact', head: true })
+          .eq('qkateg', category.kcod)
+          .eq('qlang', 1),
+        supabase.from('numbs').select('numb').eq('kcod', category.kcod),
+      ]);
 
-  for (const category of categories) {
-    const { count: questionCount } = await supabase
-      .from('quest')
-      .select('*', { count: 'exact', head: true })
-      .eq('qkateg', category.kcod)
-      .eq('qlang', 1);
+      const examQuestionCount =
+        pools?.reduce((sum, pool) => sum + pool.numb, 0) ?? 0;
 
-    const { data: pools } = await supabase
-      .from('numbs')
-      .select('numb')
-      .eq('kcod', category.kcod);
+      return {
+        ...category,
+        questionCount: questionCount ?? 0,
+        examQuestionCount,
+      };
+    })
+  );
+}
 
-    const examQuestionCount =
-      pools?.reduce((sum, pool) => sum + pool.numb, 0) ?? 0;
+const getCachedCategories = unstable_cache(
+  fetchCategoriesWithStats,
+  ['categories-with-stats'],
+  { revalidate: 3600, tags: ['categories'] }
+);
 
-    results.push({
-      ...category,
-      questionCount: questionCount ?? 0,
-      examQuestionCount,
-    });
-  }
-
-  return results;
+export async function getCategories(): Promise<CategoryWithStats[]> {
+  return getCachedCategories();
 }

@@ -9,19 +9,18 @@ import {
   getCategoryWrongQuestions,
   type WrongQuestWithAnswers,
 } from '@/actions/questions';
-import type { CategoryWithStats } from '@/actions/categories';
 import { CategorySelector } from '@/components/home/CategorySelector';
 import { QuestionCard } from '@/components/ui/QuestionCard';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { useCategory } from '@/hooks/use-category';
+import { useCategories } from '@/hooks/use-user-data';
 import { cn } from '@/lib/utils';
-
-type QuestionsClientProps = {
-  categories: CategoryWithStats[];
-};
 
 type Tab = 'saved' | 'wrong';
 
-export function QuestionsClient({ categories }: QuestionsClientProps) {
+export function QuestionsClient() {
+  const { data: categories = [], isLoading: categoriesLoading } =
+    useCategories();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as Tab) ?? 'wrong';
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -64,6 +63,10 @@ export function QuestionsClient({ categories }: QuestionsClientProps) {
 
   const activeQuestions = tab === 'wrong' ? wrongQuestions : savedQuestions;
   const isLoading = tab === 'wrong' ? wrongLoading : savedLoading;
+
+  if (categoriesLoading) {
+    return <PageSkeleton showStats={false} showCta={false} />;
+  }
 
   return (
     <div className="page-container space-y-6">

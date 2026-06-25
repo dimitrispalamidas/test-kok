@@ -4,13 +4,14 @@ import { StartTestClient } from '@/components/start/StartTestClient';
 import { EXAM_CATEGORIES } from '@/lib/constants';
 
 export default async function StartPage() {
-  const categories = await getCategories();
+  const [categories, ...topicLists] = await Promise.all([
+    getCategories(),
+    ...EXAM_CATEGORIES.map((kcod) => getTopics(kcod)),
+  ]);
 
-  const topicCountByKcod: Record<number, number> = {};
-  for (const kcod of EXAM_CATEGORIES) {
-    const topics = await getTopics(kcod);
-    topicCountByKcod[kcod] = topics.length;
-  }
+  const topicCountByKcod = Object.fromEntries(
+    EXAM_CATEGORIES.map((kcod, index) => [kcod, topicLists[index]?.length ?? 0])
+  );
 
   return (
     <StartTestClient

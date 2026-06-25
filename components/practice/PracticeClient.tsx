@@ -14,6 +14,7 @@ import { ExamActionBar } from '@/components/exam/ExamActionBar';
 import { ExamHeader } from '@/components/exam/ExamHeader';
 import { QuestionCard } from '@/components/ui/QuestionCard';
 import { QuestionNumberStrip } from '@/components/ui/QuestionNumberStrip';
+import { invalidateUserData } from '@/lib/invalidate-user-data';
 import { CATEGORY_LABELS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { Kateg, QuestWithAnswers } from '@/types/database';
@@ -189,7 +190,7 @@ export function PracticeClient({
         toast.success(response.streak.message, { duration: 5000 });
       }
 
-      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      invalidateUserData(queryClient);
 
       setSummary({
         score,
@@ -231,7 +232,7 @@ export function PracticeClient({
         .then((result) => {
           if (result?.message) {
             toast.success(result.message, { duration: 5000 });
-            queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+            invalidateUserData(queryClient);
           }
         })
         .catch(() => {});

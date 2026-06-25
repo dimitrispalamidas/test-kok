@@ -5,6 +5,7 @@ import { Flame, Loader2, RefreshCw, Trophy, Zap } from 'lucide-react';
 import { getLeaderboard } from '@/actions/user-data';
 import { useCategory } from '@/hooks/use-category';
 import { XpGuide } from '@/components/ranking/XpGuide';
+import { queryKeys } from '@/lib/query-keys';
 import { cn } from '@/lib/utils';
 
 type LeaderboardPanelProps = {
@@ -54,13 +55,13 @@ export function LeaderboardPanel({ currentUserId }: LeaderboardPanelProps) {
   const queryClient = useQueryClient();
 
   const { data: entries = [], isLoading, error, isFetching } = useQuery({
-    queryKey: ['leaderboard', kcod],
+    queryKey: queryKeys.leaderboard(kcod),
     queryFn: () => getLeaderboard(kcod),
     staleTime: 5 * 60 * 1000,
   });
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['leaderboard', kcod] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.leaderboard(kcod) });
   };
 
   const currentUser = currentUserId

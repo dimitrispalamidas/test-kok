@@ -1,7 +1,8 @@
 'use server';
 
+import { unstable_cache } from 'next/cache';
 import { isExamCategory, LANG } from '@/lib/constants';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import { extractTheme } from '@/lib/topics';
 
 export type TopicWithCount = {
@@ -9,12 +10,12 @@ export type TopicWithCount = {
   questionCount: number;
 };
 
-export async function getTopics(kcod: number): Promise<TopicWithCount[]> {
+async function fetchTopics(kcod: number): Promise<TopicWithCount[]> {
   if (!isExamCategory(kcod)) {
     throw new Error('Invalid exam category');
   }
 
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data, error } = await supabase
     .from('quest')
@@ -37,4 +38,12 @@ export async function getTopics(kcod: number): Promise<TopicWithCount[]> {
   return Array.from(counts.entries())
     .map(([theme, questionCount]) => ({ theme, questionCount }))
     .sort((a, b) => a.theme.localeCompare(b.theme, 'el'));
+}
+
+export async function getTopics(kcod: number): Promise<TopicWithCount[]> {
+  return unstable_cache(
+    () => fetchTopics(kcod),
+    ['topics', String(kcod)],
+    { revalidate: 3600, tags: ['topics', `topics-${kcod}`] }
+  )();
 }

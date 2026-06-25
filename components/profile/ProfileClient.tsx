@@ -19,28 +19,23 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import type { getExamHistory, getProfile } from '@/actions/user-data';
+import { useQueryClient } from '@tanstack/react-query';
 import { signOut, updateUsername } from '@/actions/user-data';
 import { CategorySelector } from '@/components/home/CategorySelector';
-import type { CategoryWithStats } from '@/actions/categories';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { useCategoryStats } from '@/hooks/use-category-stats';
-import type { CategoryCounts } from '@/lib/category-stats';
+import {
+  useCategories,
+  useCurrentUser,
+  useExamHistory,
+  useProfile,
+  useSavedWrongCountsByCategory,
+} from '@/hooks/use-user-data';
+import { queryKeys } from '@/lib/query-keys';
 import { CATEGORY_LABELS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
-
-type ProfileUser = { email: string; id: string };
-type HistoryEntry = Awaited<ReturnType<typeof getExamHistory>>[number];
-type ProfileData = NonNullable<Awaited<ReturnType<typeof getProfile>>>;
-
-type ProfileClientProps = {
-  categories: CategoryWithStats[];
-  user: ProfileUser | null;
-  profile: ProfileData | null;
-  history: HistoryEntry[];
-  countsByCategory: CategoryCounts;
-};
 
 const infoItems = [
   {
@@ -125,21 +120,29 @@ function formatDate(iso: string) {
   });
 }
 
-export function ProfileClient({
-  categories,
-  user,
-  profile,
-  history,
-  countsByCategory,
-}: ProfileClientProps) {
+export function ProfileClient() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: categories = [], isLoading: categoriesLoading } =
+    useCategories();
+  const { data: user } = useCurrentUser();
+  const { data: profile } = useProfile();
+  const { data: history = [] } = useExamHistory(50);
+  const { data: countsByCategory = {} } = useSavedWrongCountsByCategory();
+
   const [loggingOut, setLoggingOut] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [usernameInput, setUsernameInput] = useState(profile?.username ?? '');
+  const [usernameInput, setUsernameInput] = useState('');
   const [savingUsername, setSavingUsername] = useState(false);
-  const [showUsernameForm, setShowUsernameForm] = useState(
-    profile?.isDefaultUsername ?? false
-  );
+  const [showUsernameForm, setShowUsernameForm] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setUsernameInput(profile.username);
+      setShowUsernameForm(profile.isDefaultUsername);
+    }
+  }, [profile]);
+
   const { history: filteredHistory, stats } = useCategoryStats(
     history,
     countsByCategory
@@ -154,8 +157,12 @@ export function ProfileClient({
     setLoggingOut(true);
     try {
       await signOut();
+      queryClient.removeQueries({ queryKey: queryKeys.currentUser() });
+      queryClient.removeQueries({ queryKey: queryKeys.profile() });
+      queryClient.removeQueries({ queryKey: queryKeys.examHistory(50) });
+      queryClient.removeQueries({ queryKey: queryKeys.savedWrongCounts() });
+      queryClient.removeQueries({ queryKey: queryKeys.dailyStreak() });
       router.push('/');
-      router.refresh();
     } catch {
       toast.error('Σφάλμα αποσύνδεσης');
     } finally {
@@ -173,13 +180,17 @@ export function ProfileClient({
       await updateUsername(usernameInput);
       toast.success('Το όνομα ενημερώθηκε');
       setShowUsernameForm(false);
-      router.refresh();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.profile() });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Σφάλμα αποθήκευσης');
     } finally {
       setSavingUsername(false);
     }
   };
+
+  if (categoriesLoading) {
+    return <PageSkeleton showCta={false} />;
+  }
 
   return (
     <div className="page-container space-y-6">
