@@ -1,4 +1,4 @@
-import { BarChart3, ClipboardList, Flame, Target } from 'lucide-react';
+import { BarChart3, ClipboardList, Flame, Sparkles, Target } from 'lucide-react';
 import type { CategoryStats } from '@/lib/category-stats';
 
 type StatCardProps = {
@@ -26,9 +26,17 @@ function StatCard({ icon: Icon, value, label, iconBg, iconColor }: StatCardProps
 type StatsGridProps = {
   examQuestionCount?: number;
   stats: CategoryStats;
+  answerStreak?: {
+    currentStreak: number;
+    bestStreak: number;
+  } | null;
 };
 
-export function StatsGrid({ examQuestionCount = 0, stats }: StatsGridProps) {
+export function StatsGrid({
+  examQuestionCount = 0,
+  stats,
+  answerStreak = null,
+}: StatsGridProps) {
   const totalTests = stats.totalTests;
   const successRate =
     stats.totalQuestions > 0
@@ -67,6 +75,23 @@ export function StatsGrid({ examQuestionCount = 0, stats }: StatsGridProps) {
         iconBg="bg-primary/15"
         iconColor="text-primary"
       />
+      {answerStreak && (
+        <StatCard
+          icon={Sparkles}
+          value={String(
+            answerStreak.currentStreak > 0
+              ? answerStreak.currentStreak
+              : answerStreak.bestStreak
+          )}
+          label={
+            answerStreak.currentStreak > 0
+              ? 'Σερί Σωστών'
+              : 'Καλύτερο Σερί Σωστών'
+          }
+          iconBg="bg-violet-400/15"
+          iconColor="text-violet-400"
+        />
+      )}
     </div>
   );
 }

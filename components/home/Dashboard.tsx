@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { createSerializer, parseAsInteger } from 'nuqs';
 import { CategorySelector } from '@/components/home/CategorySelector';
 import { DailyStreakBanner } from '@/components/home/DailyStreakBanner';
-import { AnswerStreakBanner } from '@/components/home/AnswerStreakBanner';
 import { RecentResults } from '@/components/home/RecentResults';
 import { StatsGrid } from '@/components/home/StatsGrid';
 import { PageSkeleton, StatsGridSkeleton } from '@/components/ui/PageSkeleton';
@@ -53,10 +52,6 @@ export function Dashboard() {
 
       {streakStatus && <DailyStreakBanner status={streakStatus} />}
 
-      {answerStreakStatus && (
-        <AnswerStreakBanner status={answerStreakStatus} />
-      )}
-
       <Link
         href={categorySerializer('/start', { k: kcod })}
         className="group flex w-full items-center gap-4 rounded-2xl bg-primary px-6 py-5 font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:brightness-110 active:scale-[0.98]"
@@ -74,6 +69,7 @@ export function Dashboard() {
         <StatsGrid
           examQuestionCount={selected?.examQuestionCount ?? 0}
           stats={stats}
+          answerStreak={answerStreakStatus}
         />
       )}
 

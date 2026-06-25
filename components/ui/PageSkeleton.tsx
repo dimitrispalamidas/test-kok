@@ -49,13 +49,12 @@ export function PageSkeleton({
   );
 }
 
-export function StatsGridSkeleton() {
+export function StatsGridSkeleton({ count = 5 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 gap-3" aria-busy="true">
-      <SkeletonBlock className="h-28" />
-      <SkeletonBlock className="h-28" />
-      <SkeletonBlock className="h-28" />
-      <SkeletonBlock className="h-28" />
+      {Array.from({ length: count }, (_, i) => (
+        <SkeletonBlock key={i} className="h-28" />
+      ))}
     </div>
   );
 }

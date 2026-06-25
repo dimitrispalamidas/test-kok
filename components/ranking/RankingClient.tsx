@@ -1,12 +1,13 @@
 'use client';
 
-import { Award, BarChart3, Target, Trophy } from 'lucide-react';
+import { Award, BarChart3, Sparkles, Target, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { CategorySelector } from '@/components/home/CategorySelector';
 import { LeaderboardPanel } from '@/components/ranking/LeaderboardPanel';
 import { PageSkeleton, StatsGridSkeleton } from '@/components/ui/PageSkeleton';
 import { useCategoryStats } from '@/hooks/use-category-stats';
 import {
+  useAnswerStreakStatus,
   useCategories,
   useCurrentUser,
   useExamHistory,
@@ -33,6 +34,7 @@ export function RankingClient() {
   const { data: history = [], isLoading: historyLoading } = useExamHistory(50);
   const { data: countsByCategory = {} } = useSavedWrongCountsByCategory();
   const { data: currentUser } = useCurrentUser();
+  const { data: answerStreakStatus } = useAnswerStreakStatus();
 
   const { stats } = useCategoryStats(history, countsByCategory);
 
@@ -118,6 +120,23 @@ export function RankingClient() {
               iconBg="bg-warning/15"
               iconColor="text-warning"
             />
+            {answerStreakStatus && (
+              <StatCard
+                icon={Sparkles}
+                value={String(
+                  answerStreakStatus.currentStreak > 0
+                    ? answerStreakStatus.currentStreak
+                    : answerStreakStatus.bestStreak
+                )}
+                label={
+                  answerStreakStatus.currentStreak > 0
+                    ? 'Σερί Σωστών'
+                    : 'Καλύτερο Σερί Σωστών'
+                }
+                iconBg="bg-violet-400/15"
+                iconColor="text-violet-400"
+              />
+            )}
           </div>
         )
       ) : tab === 'ranking' ? (
