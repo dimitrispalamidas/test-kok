@@ -15,4 +15,5 @@ export function invalidateUserData(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: ['saved-questions'] });
   queryClient.invalidateQueries({ queryKey: ['topic-stats'] });
   queryClient.invalidateQueries({ queryKey: ['profile-insights'] });
+  queryClient.invalidateQueries({ queryKey: ['category-streak'] });
 }

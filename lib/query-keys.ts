@@ -6,6 +6,7 @@ export const queryKeys = {
   answerStreak: () => ['answer-streak'] as const,
   profile: () => ['profile'] as const,
   profileInsights: (kcod: number) => ['profile-insights', kcod] as const,
+  categoryStreak: (kcod: number) => ['category-streak', kcod] as const,
   currentUser: () => ['current-user'] as const,
   leaderboard: (kcod: number) => ['leaderboard', kcod] as const,
 };

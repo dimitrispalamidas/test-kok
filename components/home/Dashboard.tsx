@@ -9,13 +9,14 @@ import { PageSkeleton, StatsGridSkeleton } from '@/components/ui/PageSkeleton';
 import { useCategory } from '@/hooks/use-category';
 import { useCategoryStats } from '@/hooks/use-category-stats';
 import {
-  useAnswerStreakStatus,
   useCategories,
+  useCategoryStreakStats,
   useDailyStreakStatus,
   useExamHistory,
   useSavedWrongCountsByCategory,
 } from '@/hooks/use-user-data';
 import { hrefWithCategory } from '@/lib/category-url';
+import { EMPTY_CATEGORY_STREAK_STATS } from '@/lib/category-streak';
 
 export function Dashboard() {
   const { data: categories = [], isLoading: categoriesLoading } =
@@ -23,10 +24,11 @@ export function Dashboard() {
   const { data: history = [], isLoading: historyLoading } = useExamHistory(50);
   const { data: countsByCategory = {} } = useSavedWrongCountsByCategory();
   const { data: streakStatus } = useDailyStreakStatus();
-  const { data: answerStreakStatus } = useAnswerStreakStatus();
 
   const { kcod } = useCategory();
   const { stats } = useCategoryStats(history, countsByCategory);
+  const { data: categoryStreakStats, isLoading: categoryStreakLoading } =
+    useCategoryStreakStats(kcod);
 
   if (categoriesLoading) {
     return <PageSkeleton showRecentResults={false} />;
@@ -54,13 +56,19 @@ export function Dashboard() {
         <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
       </Link>
 
-      {historyLoading ? (
+      {historyLoading || categoryStreakLoading ? (
         <StatsGridSkeleton />
       ) : (
         <StatsGrid
           stats={stats}
-          dailyStreak={streakStatus}
-          answerStreak={answerStreakStatus}
+          dailyStreak={
+            categoryStreakStats?.dailyStreak ??
+            EMPTY_CATEGORY_STREAK_STATS.dailyStreak
+          }
+          answerStreak={
+            categoryStreakStats?.answerStreak ??
+            EMPTY_CATEGORY_STREAK_STATS.answerStreak
+          }
         />
       )}
     </div>

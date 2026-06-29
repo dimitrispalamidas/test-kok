@@ -6,6 +6,11 @@ import {
   type AnswerStreakStatus,
 } from '@/lib/answer-streak';
 import {
+  computeAnswerStreakFromAttempts,
+  computeDailyStreakFromActivityDates,
+  type CategoryStreakStats,
+} from '@/lib/category-streak';
+import {
   buildDailyStreakStatus,
   buildStreakToastMessage,
   computeDailyStreakUpdate,
@@ -344,6 +349,46 @@ export async function getAnswerStreakStatus(): Promise<AnswerStreakStatus | null
     profile.current_answer_streak,
     profile.best_answer_streak
   );
+}
+
+export async function getCategoryStreakStats(
+  kcod: number
+): Promise<CategoryStreakStats | null> {
+  const user = await getAuthUser();
+  if (!user) return null;
+
+  const supabase = await createClient();
+
+  const [{ data: examResults }, { data: attempts }] = await Promise.all([
+    supabase
+      .from('user_exam_results')
+      .select('created_at')
+      .eq('user_id', user.id)
+      .eq('kcod', kcod),
+    supabase
+      .from('user_question_attempts')
+      .select('created_at, is_correct')
+      .eq('user_id', user.id)
+      .eq('kcod', kcod)
+      .order('created_at', { ascending: true }),
+  ]);
+
+  const activityDates: string[] = [];
+
+  for (const result of examResults ?? []) {
+    activityDates.push(getDateInAthens(new Date(result.created_at)));
+  }
+
+  for (const attempt of attempts ?? []) {
+    activityDates.push(getDateInAthens(new Date(attempt.created_at)));
+  }
+
+  return {
+    dailyStreak: computeDailyStreakFromActivityDates(activityDates),
+    answerStreak: computeAnswerStreakFromAttempts(
+      (attempts ?? []).map((attempt) => attempt.is_correct)
+    ),
+  };
 }
 
 export async function getExamHistory(limit = 20) {

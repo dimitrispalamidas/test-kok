@@ -26,20 +26,20 @@ function StatCard({ icon: Icon, value, label, iconBg, iconColor }: StatCardProps
 
 type StatsGridProps = {
   stats: CategoryStats;
-  dailyStreak?: {
+  dailyStreak: {
     currentStreak: number;
     longestStreak: number;
-  } | null;
-  answerStreak?: {
+  };
+  answerStreak: {
     currentStreak: number;
     bestStreak: number;
-  } | null;
+  };
 };
 
 export function StatsGrid({
   stats,
-  dailyStreak = null,
-  answerStreak = null,
+  dailyStreak,
+  answerStreak,
 }: StatsGridProps) {
   const quickTests = stats.quickTests;
   const simulationTests = stats.simulationTests;
@@ -64,28 +64,24 @@ export function StatsGrid({
         iconBg={simulationDisplay.iconBg}
         iconColor={simulationDisplay.iconColor}
       />
-      {dailyStreak && (
-        <StatCard
-          icon={dailyDisplay.icon}
-          value={String(
-            dailyStreak.currentStreak > 0
-              ? dailyStreak.currentStreak
-              : dailyStreak.longestStreak
-          )}
-          label={getDailyStreakStatLabel(dailyStreak.currentStreak)}
-          iconBg={dailyDisplay.iconBg}
-          iconColor={dailyDisplay.iconColor}
-        />
-      )}
-      {answerStreak && (
-        <StatCard
-          icon={answerDisplay.icon}
-          value={String(answerStreak.bestStreak)}
-          label={STAT_LABELS.answerStreakBest}
-          iconBg={answerDisplay.iconBg}
-          iconColor={answerDisplay.iconColor}
-        />
-      )}
+      <StatCard
+        icon={dailyDisplay.icon}
+        value={String(
+          dailyStreak.currentStreak > 0
+            ? dailyStreak.currentStreak
+            : dailyStreak.longestStreak
+        )}
+        label={getDailyStreakStatLabel(dailyStreak.currentStreak)}
+        iconBg={dailyDisplay.iconBg}
+        iconColor={dailyDisplay.iconColor}
+      />
+      <StatCard
+        icon={answerDisplay.icon}
+        value={String(answerStreak.bestStreak)}
+        label={STAT_LABELS.answerStreakBest}
+        iconBg={answerDisplay.iconBg}
+        iconColor={answerDisplay.iconColor}
+      />
     </div>
   );
 }

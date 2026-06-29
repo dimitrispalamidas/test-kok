@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCategories } from '@/actions/categories';
 import {
   getAnswerStreakStatus,
+  getCategoryStreakStats,
   getDailyStreakStatus,
   getExamHistory,
   getProfile,
@@ -52,6 +53,14 @@ export function useAnswerStreakStatus() {
   return useQuery({
     queryKey: queryKeys.answerStreak(),
     queryFn: getAnswerStreakStatus,
+    staleTime: USER_DATA_STALE_TIME,
+  });
+}
+
+export function useCategoryStreakStats(kcod: number) {
+  return useQuery({
+    queryKey: queryKeys.categoryStreak(kcod),
+    queryFn: () => getCategoryStreakStats(kcod),
     staleTime: USER_DATA_STALE_TIME,
   });
 }
