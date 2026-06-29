@@ -5,6 +5,7 @@ import {
   Bus,
   Car,
   ChevronDown,
+  ClipboardList,
   Truck,
   AlertTriangle,
 } from 'lucide-react';
@@ -27,6 +28,8 @@ const CATEGORY_ICONS: Record<
   3: Truck,
   4: Bus,
   5: AlertTriangle,
+  6: ClipboardList,
+  7: ClipboardList,
 };
 
 type CategorySelectorProps = {

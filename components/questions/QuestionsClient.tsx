@@ -25,7 +25,12 @@ export function QuestionsClient() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as Tab) ?? 'wrong';
   const [tab, setTab] = useState<Tab>(initialTab);
+  const [isReady, setIsReady] = useState(false);
   const { kcod } = useCategory();
+
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
 
   useEffect(() => {
     const nextTab = searchParams.get('tab') as Tab;
@@ -65,7 +70,7 @@ export function QuestionsClient() {
   const activeQuestions = tab === 'wrong' ? wrongQuestions : savedQuestions;
   const isLoading = tab === 'wrong' ? wrongLoading : savedLoading;
 
-  if (categoriesLoading) {
+  if (!isReady || categoriesLoading) {
     return <PageSkeleton showStats={false} showCta={false} />;
   }
 

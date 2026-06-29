@@ -6,6 +6,8 @@ export const CATEGORY_LABELS: Record<number, string> = {
   3: 'Κατηγορία C — Φορτηγό',
   4: 'Κατηγορία D — Λεωφορείο',
   5: 'Κατηγορία ADR — Επικίνδυνα Φορτία',
+  6: 'ΠΕΙ — Φορτηγό',
+  7: 'ΠΕΙ — Λεωφορείο',
 };
 
 export const CATEGORY_SHORT: Record<number, string> = {
@@ -14,18 +16,22 @@ export const CATEGORY_SHORT: Record<number, string> = {
   3: 'C',
   4: 'D',
   5: 'ADR',
+  6: 'ΠΕΙ-C',
+  7: 'ΠΕΙ-D',
 };
 
-/** Minimum correct answers to pass per category */
+/** Official TestDrive / ΜΣΘΕΥΟ pass thresholds (min correct / exam total). */
 export const PASS_THRESHOLDS: Record<number, { min: number; total: number }> = {
-  1: { min: 37, total: 40 },
-  2: { min: 22, total: 25 },
-  3: { min: 22, total: 25 },
-  4: { min: 22, total: 25 },
-  5: { min: 22, total: 25 },
+  1: { min: 29, total: 30 },
+  2: { min: 9, total: 10 },
+  3: { min: 9, total: 10 },
+  4: { min: 9, total: 10 },
+  5: { min: 14, total: 15 },
+  6: { min: 36, total: 60 },
+  7: { min: 36, total: 60 },
 };
 
-export const EXAM_CATEGORIES = [1, 2, 3, 4, 5] as const;
+export const EXAM_CATEGORIES = [1, 2, 3, 4, 5, 6, 7] as const;
 
 export type ExamCategoryId = (typeof EXAM_CATEGORIES)[number];
 
@@ -34,7 +40,7 @@ export function isExamCategory(kcod: number): kcod is ExamCategoryId {
 }
 
 export function getPassThreshold(kcod: number): { min: number; total: number } {
-  return PASS_THRESHOLDS[kcod] ?? { min: 22, total: 25 };
+  return PASS_THRESHOLDS[kcod] ?? { min: 9, total: 10 };
 }
 
 export const STAT_LABELS = {

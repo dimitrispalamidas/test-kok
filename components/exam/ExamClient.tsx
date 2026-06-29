@@ -48,10 +48,7 @@ export function ExamClient({ category, questions }: ExamClientProps) {
   const passThreshold = getPassThreshold(category.kcod);
   const categoryLabel = CATEGORY_LABELS[category.kcod] ?? category.klect;
 
-  // Scale the pass minimum to however many questions were actually generated.
-  // The hardcoded threshold assumes a full-length exam (e.g. 37/40 for category B),
-  // but the DB may produce fewer questions (e.g. 30). We keep the same passing
-  // percentage rather than using the raw hardcoded number.
+  // Scale pass minimum to the generated question count (same ratio as official exam).
   const scaledPassMin = Math.ceil(
     questions.length * (passThreshold.min / passThreshold.total)
   );
